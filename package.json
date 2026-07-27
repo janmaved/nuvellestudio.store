@@ -1,25 +1,16 @@
 {
-  "name": "diva-beauty",
+  "name": "nuvelle",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "wrangler pages dev dist",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name diva-beauty",
-    "db:migrate:local": "wrangler d1 migrations apply diva-beauty-production --local",
-    "db:migrate:prod": "wrangler d1 migrations apply diva-beauty-production",
-    "db:seed": "wrangler d1 execute diva-beauty-production --local --file=./seed.sql",
-    "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local && npm run db:seed"
+    "dev": "netlify dev",
+    "build": "echo 'static build'",
+    "start": "netlify dev"
   },
   "dependencies": {
-    "hono": "^4.6.0"
+    "@netlify/blobs": "^8.2.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250705.0",
-    "@hono/vite-cloudflare-pages": "^0.4.2",
-    "vite": "^5.4.0",
-    "wrangler": "^3.78.0",
-    "typescript": "^5.5.0"
+    "netlify-cli": "^17.0.0"
   }
 }

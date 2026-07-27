@@ -310,8 +310,16 @@ function pageContact() {
 }
 
 // ---------- Router ----------
+function currentPage() {
+  const p = location.pathname.replace(/\/$/, '')
+  if (p === '' || p === '/index.html') return 'home'
+  if (p.startsWith('/product/')) return 'product'
+  const seg = p.slice(1)
+  if (['shop', 'cart', 'checkout', 'about', 'faq', 'shipping', 'contact'].includes(seg)) return seg
+  return 'home'
+}
 async function render() {
-  const app = $('#app'); const page = app.dataset.page
+  const app = $('#app'); const page = currentPage()
   app.innerHTML = `<div class="min-h-screen flex items-center justify-center"><i class="fas fa-spinner spin text-4xl text-mauve"></i></div>`
   try {
     let html = ''

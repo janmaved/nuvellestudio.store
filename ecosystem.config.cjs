@@ -1,13 +1,11 @@
+// Sandbox preview: local emulator of Netlify (static + /api function + SPA redirects).
+// Production deploy target is Netlify (netlify.toml). This is dev-only.
 module.exports = {
-  apps: [
-    {
-      name: 'diva-beauty',
-      script: 'npx',
-      args: 'wrangler pages dev dist --d1=diva-beauty-production --local --ip 0.0.0.0 --port 3000',
-      env: { NODE_ENV: 'development', PORT: 3000 },
-      watch: false,
-      instances: 1,
-      exec_mode: 'fork'
-    }
-  ]
+  apps: [{
+    name: 'nuvelle',
+    script: 'node',
+    args: 'local-dev-server.mjs',
+    env: { NODE_ENV: 'development', PORT: 3000 },
+    watch: false, instances: 1, exec_mode: 'fork'
+  }]
 }

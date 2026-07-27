@@ -1,16 +1,35 @@
-# Netlify configuration for Nuvéllé
-# NOTE: This app uses Cloudflare D1 (SQLite) for its database, which only runs on
-# Cloudflare Pages/Workers. To host on Netlify you must switch the database to a
-# Netlify-compatible option (e.g. Supabase / Neon Postgres via REST) — the D1
-# calls in src/index.tsx would need to be swapped for that provider's client.
-#
-# For a one-click, zero-change deploy, Cloudflare Pages is recommended (see README).
-# The static frontend (public/) can still be served by Netlify, but the /api routes
-# require the database migration above.
-
+# Netlify configuration for Nuvéllé — one-click deploy
 [build]
-  command = "npm run build"
-  publish = "dist"
+  publish = "public"
+  command = "echo 'No build step needed — static frontend + Netlify Functions'"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[dev]
+  framework = "#static"
+  publish = "public"
+  targetPort = 3000
+  autoLaunch = false
+
+# API -> serverless function (function also declares config.path = "/api/*")
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# Admin panel
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+# SPA clean routes -> index.html (client-side router reads the path)
+[[redirects]]
+  from = "/product/*"
+  to = "/index.html"
+  status = 200
 
 [[redirects]]
   from = "/*"
