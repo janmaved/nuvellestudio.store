@@ -42,7 +42,7 @@ function shell(content) {
     </aside>
     <main class="flex-1 bg-cream">
       <header class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center md:hidden"><span class="font-serif text-2xl text-wine">Nuvéllé Admin</span><select onchange="setTab(this.value)" class="!w-auto text-sm">${tabs.map(t => `<option value="${t[0]}" ${TAB === t[0] ? 'selected' : ''}>${t[2]}</option>`).join('')}</select></header>
-      <div class="p-6 max-w-6xl">${content}</div>
+      <div class="p-6 ${TAB === 'sections' ? 'max-w-none' : 'max-w-6xl'}">${content}</div>
     </main></div>`
 }
 window.setTab = (t) => { TAB = t; renderAdmin() }
@@ -302,26 +302,47 @@ const BLOCK_META = {
   hero: ['fa-star', 'Hero Banner'], 'category-grid': ['fa-th', 'Category Grid'], products: ['fa-box', 'Product Row'],
   banner: ['fa-image', 'Promo Banner'], features: ['fa-icons', 'Feature Highlights'], newsletter: ['fa-envelope', 'Newsletter'], custom: ['fa-wand-magic-sparkles', 'AI / Custom Block']
 }
+let _previewDevice = 'desktop'
 async function viewSections() {
   const { data: blocks } = await api.get('/blocks')
   const sorted = [...blocks].sort((a, b) => a.sort - b.sort)
-  return `<div class="flex flex-wrap justify-between items-center gap-3 mb-2"><h1 class="font-serif text-4xl text-wine">Store Builder</h1>
-    <button onclick="openAiBlock()" class="btn btn-primary px-5 py-2.5"><i class="fas fa-wand-magic-sparkles mr-1"></i>AI Block Generator</button></div>
-  <p class="text-charcoal/60 text-sm mb-6">Drag sections to reorder your homepage. Click a section to edit, toggle visibility, or delete.</p>
-  <div class="grid lg:grid-cols-2 gap-6">
-    <div><h3 class="font-serif text-lg text-wine mb-3">Homepage Sections</h3>
-      <div id="blockList" class="space-y-3">${sorted.map(b => blockRow(b)).join('')}</div>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button onclick="addBlock('banner')" class="btn btn-outline px-3 py-2 text-xs"><i class="fas fa-plus mr-1"></i>Promo Banner</button>
-        <button onclick="addBlock('products')" class="btn btn-outline px-3 py-2 text-xs"><i class="fas fa-plus mr-1"></i>Product Row</button>
-        <button onclick="addBlock('category-grid')" class="btn btn-outline px-3 py-2 text-xs"><i class="fas fa-plus mr-1"></i>Category Grid</button>
-        <button onclick="addBlock('newsletter')" class="btn btn-outline px-3 py-2 text-xs"><i class="fas fa-plus mr-1"></i>Newsletter</button>
-        <button onclick="addBlock('features')" class="btn btn-outline px-3 py-2 text-xs"><i class="fas fa-plus mr-1"></i>Features</button>
+  const origin = location.origin
+  return `<div class="flex flex-wrap justify-between items-center gap-3 mb-1"><h1 class="font-serif text-4xl text-wine">Store Builder</h1>
+    <div class="flex gap-2"><button onclick="openThemeQuick()" class="btn btn-outline px-4 py-2.5 text-sm"><i class="fas fa-palette mr-1"></i>Theme</button><button onclick="openAiBlock()" class="btn btn-primary px-5 py-2.5"><i class="fas fa-wand-magic-sparkles mr-1"></i>AI Block Generator</button></div></div>
+  <p class="text-charcoal/60 text-sm mb-4">Edit sections on the left, see your store update <b>live</b> on the right — just like Shopify. Drag to reorder.</p>
+  <div class="grid xl:grid-cols-[minmax(0,420px)_1fr] gap-6 items-start">
+    <div class="space-y-4">
+      <div class="card p-4">
+        <h3 class="font-serif text-lg text-wine mb-3">Homepage Sections</h3>
+        <div id="blockList" class="space-y-2.5">${sorted.map(b => blockRow(b)).join('')}</div>
+        <div class="mt-4 pt-3 border-t border-rose/10"><p class="text-xs text-charcoal/50 mb-2">Add section:</p><div class="flex flex-wrap gap-2">
+          <button onclick="addBlock('banner')" class="btn btn-outline px-3 py-1.5 text-xs"><i class="fas fa-plus mr-1"></i>Banner</button>
+          <button onclick="addBlock('products')" class="btn btn-outline px-3 py-1.5 text-xs"><i class="fas fa-plus mr-1"></i>Product Row</button>
+          <button onclick="addBlock('category-grid')" class="btn btn-outline px-3 py-1.5 text-xs"><i class="fas fa-plus mr-1"></i>Categories</button>
+          <button onclick="addBlock('newsletter')" class="btn btn-outline px-3 py-1.5 text-xs"><i class="fas fa-plus mr-1"></i>Newsletter</button>
+          <button onclick="addBlock('features')" class="btn btn-outline px-3 py-1.5 text-xs"><i class="fas fa-plus mr-1"></i>Features</button>
+        </div></div>
+      </div>
+      <div id="blockEditor" class="card p-5"><p class="text-charcoal/40 text-center py-8"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>Click a section's <i class="fas fa-pen text-mauve"></i> to edit it here</p></div>
+    </div>
+    <div class="card p-3 sticky top-4">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <span class="text-sm font-medium text-wine"><i class="fas fa-eye text-mauve mr-1"></i>Live Preview</span>
+        <div class="flex gap-1">
+          <button onclick="setPreviewDevice('desktop')" id="pvDesktop" class="px-3 py-1.5 rounded-lg text-sm ${_previewDevice === 'desktop' ? 'bg-mauve text-white' : 'text-charcoal/50'}"><i class="fas fa-desktop"></i></button>
+          <button onclick="setPreviewDevice('mobile')" id="pvMobile" class="px-3 py-1.5 rounded-lg text-sm ${_previewDevice === 'mobile' ? 'bg-mauve text-white' : 'text-charcoal/50'}"><i class="fas fa-mobile-screen"></i></button>
+          <button onclick="reloadPreview()" class="px-3 py-1.5 rounded-lg text-sm text-charcoal/50 hover:text-mauve" title="Refresh"><i class="fas fa-rotate-right"></i></button>
+          <a href="/" target="_blank" class="px-3 py-1.5 rounded-lg text-sm text-charcoal/50 hover:text-mauve" title="Open in new tab"><i class="fas fa-up-right-from-square"></i></a>
+        </div>
+      </div>
+      <div class="bg-cream rounded-xl overflow-hidden flex justify-center" style="height:72vh">
+        <iframe id="storePreview" src="${origin}/?preview=1" class="border-0 bg-white transition-all duration-300 ${_previewDevice === 'mobile' ? 'w-[390px]' : 'w-full'}" style="height:100%"></iframe>
       </div>
     </div>
-    <div id="blockEditor" class="card p-6 h-fit"><p class="text-charcoal/40 text-center py-10"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>Select a section to edit its content</p></div>
   </div>`
 }
+window.setPreviewDevice = (d) => { _previewDevice = d; const f = $('#storePreview'); if (f) { f.classList.toggle('w-[390px]', d === 'mobile'); f.classList.toggle('w-full', d === 'desktop') } $('#pvDesktop')?.classList.toggle('bg-mauve', d === 'desktop'); $('#pvDesktop')?.classList.toggle('text-white', d === 'desktop'); $('#pvMobile')?.classList.toggle('bg-mauve', d === 'mobile'); $('#pvMobile')?.classList.toggle('text-white', d === 'mobile') }
+window.reloadPreview = () => { const f = $('#storePreview'); if (f) f.src = f.src.split('?')[0] + '?preview=1&t=' + Date.now() }
 function blockRow(b) {
   const m = BLOCK_META[b.type] || ['fa-cube', b.type]
   const title = (b.data && b.data.title) || m[1]
@@ -336,6 +357,11 @@ function blockRow(b) {
 }
 let _blocksCache = []
 async function loadBlocks() { const { data } = await api.get('/blocks'); _blocksCache = data; return data }
+async function refreshSectionList() {
+  await loadBlocks()
+  const list = $('#blockList'); if (list) { list.innerHTML = [..._blocksCache].sort((a, b) => a.sort - b.sort).map(b => blockRow(b)).join(''); initBlockDnd() }
+  reloadPreview()
+}
 window.addBlock = async (type) => {
   const defaults = {
     banner: { title: 'New Promo Banner', subtitle: 'Add your message here', cta: 'Shop Now', link: '/shop', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200', align: 'left' },
@@ -345,10 +371,10 @@ window.addBlock = async (type) => {
     features: {}
   }
   const { data } = await api.post('/blocks', { type, data: defaults[type] || {} })
-  toast('Section added'); TAB = 'sections'; await renderAdmin(); editBlock(data.id)
+  toast('Section added'); await refreshSectionList(); editBlock(data.id)
 }
-window.toggleBlock = async (id, en) => { await api.put('/blocks/' + id, { enabled: en }); toast(en ? 'Section shown' : 'Section hidden'); renderAdmin() }
-window.delBlock = async (id) => { if (!confirm('Delete this section?')) return; await api.delete('/blocks/' + id); toast('Section deleted'); renderAdmin() }
+window.toggleBlock = async (id, en) => { await api.put('/blocks/' + id, { enabled: en }); toast(en ? 'Section shown' : 'Section hidden'); await refreshSectionList() }
+window.delBlock = async (id) => { if (!confirm('Delete this section?')) return; await api.delete('/blocks/' + id); toast('Section deleted'); await refreshSectionList(); const be = $('#blockEditor'); if (be) be.innerHTML = '<p class="text-charcoal/40 text-center py-8">Section deleted.</p>' }
 window.editBlock = async (id) => {
   if (!_blocksCache.length) await loadBlocks()
   const b = _blocksCache.find(x => x.id == id); if (!b) return
@@ -376,7 +402,28 @@ window.saveBlock = async (id) => {
   const data = { ...b.data }
   document.querySelectorAll('[id^="bf_"]').forEach(el => { data[el.id.replace('bf_', '')] = el.value })
   if (data.limit) data.limit = +data.limit || 8
-  await api.put('/blocks/' + id, { data }); toast('Section saved'); await renderAdmin(); editBlock(id)
+  await api.put('/blocks/' + id, { data }); toast('Section saved ✓'); await refreshSectionList(); editBlock(id)
+}
+window.openThemeQuick = async () => {
+  const { data: s } = await api.get('/settings')
+  const modal = document.createElement('div')
+  modal.id = 'thememodal'; modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 overflow-y-auto'
+  const col = (k, label) => `<div><label class="text-xs text-charcoal/60">${label}</label><div class="flex gap-2 items-center"><input type="color" id="tq_${k}" value="${s[k] || '#E8B4B8'}" class="!w-12 !h-10 !p-1 cursor-pointer"><input value="${s[k] || ''}" oninput="document.getElementById('tq_${k}').value=this.value" class="flex-1 text-sm"></div></div>`
+  modal.innerHTML = `<div class="card w-full max-w-lg p-6 my-8"><div class="flex justify-between items-center mb-4"><h2 class="font-serif text-2xl text-wine"><i class="fas fa-palette text-mauve mr-2"></i>Theme & Hero</h2><button onclick="document.getElementById('thememodal').remove()"><i class="fas fa-times text-xl"></i></button></div>
+    <div class="grid grid-cols-2 gap-3 mb-4">${col('theme_primary', 'Primary (Rose)')}${col('theme_secondary', 'Secondary (Mauve)')}${col('theme_dark', 'Dark / Wine')}${col('theme_accent', 'Accent / Gold')}</div>
+    <div class="space-y-3 mb-4">
+      <div><label class="text-xs text-charcoal/60">Hero Title</label><input id="tq_hero_title" value="${(s.hero_title || '').replace(/"/g, '&quot;')}"></div>
+      <div><label class="text-xs text-charcoal/60">Hero Subtitle</label><textarea id="tq_hero_subtitle" rows="2">${s.hero_subtitle || ''}</textarea></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-charcoal/60">Hero Button</label><input id="tq_hero_cta" value="${(s.hero_cta || '').replace(/"/g, '&quot;')}"></div><div><label class="text-xs text-charcoal/60">Announcement Bar</label><input id="tq_announcement" value="${(s.announcement || '').replace(/"/g, '&quot;')}"></div></div>
+      <div><label class="text-xs text-charcoal/60">Hero Image URL</label><input id="tq_hero_image" value="${(s.hero_image || '').replace(/"/g, '&quot;')}"></div>
+    </div>
+    <button onclick="saveThemeQuick()" class="btn btn-primary w-full py-3"><i class="fas fa-save mr-2"></i>Save & Preview</button></div>`
+  document.body.appendChild(modal)
+}
+window.saveThemeQuick = async () => {
+  const keys = ['theme_primary', 'theme_secondary', 'theme_dark', 'theme_accent', 'hero_title', 'hero_subtitle', 'hero_cta', 'announcement', 'hero_image']
+  const payload = {}; keys.forEach(k => { const el = $('#tq_' + k); if (el) payload[k] = el.value })
+  await api.post('/settings', payload); toast('Theme saved ✓'); $('#thememodal').remove(); reloadPreview()
 }
 window.openAiBlock = () => {
   const modal = document.createElement('div')
@@ -403,7 +450,7 @@ window.genAiBlock = async () => {
 window.addAiBlock = async () => {
   if (!_aiHtml) return
   await api.post('/blocks', { type: 'custom', data: { title: 'AI Block', html: _aiHtml } })
-  _aiHtml = ''; $('#aimodal').remove(); toast('Added to homepage!'); renderAdmin()
+  _aiHtml = ''; $('#aimodal').remove(); toast('Added to homepage!'); await refreshSectionList()
 }
 // Drag reorder
 function initBlockDnd() {
@@ -414,7 +461,7 @@ function initBlockDnd() {
     row.addEventListener('dragend', async () => {
       row.classList.remove('opacity-30')
       const order = Array.from(list.querySelectorAll('.block-row')).map(r => +r.dataset.id)
-      await api.post('/blocks/reorder', { order }); toast('Order saved')
+      await api.post('/blocks/reorder', { order }); toast('Order saved'); reloadPreview()
     })
     row.addEventListener('dragover', (e) => { e.preventDefault(); const after = getDragAfter(list, e.clientY); if (after == null) list.appendChild(dragEl); else list.insertBefore(dragEl, after) })
   })
