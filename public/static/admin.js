@@ -104,6 +104,12 @@ window.editProduct = async (id) => {
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="f_autoprice" class="!w-auto" ${p.auto_price_fetch ? 'checked' : ''}> Auto-update price from link</label>
         </div>
       </div>
+      <div class="md:col-span-2"><label class="text-xs text-charcoal/60">Product Highlights (one per line, shown as bullet points — optional)</label><textarea id="f_highlights" rows="3" placeholder="e.g.&#10;Long-lasting 12hr wear&#10;Cruelty-free &amp; vegan&#10;Suitable for all skin types">${p.highlights || ''}</textarea></div>
+      <div class="md:col-span-2 bg-softpink rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium"><i class="fas fa-circle-question text-mauve mr-1"></i>Product FAQ (optional)</span><button type="button" onclick="addFaqRow()" class="btn btn-outline px-3 py-1.5 text-xs"><i class="fas fa-plus mr-1"></i>Add FAQ</button></div>
+        <div id="faqRows" class="space-y-2"></div>
+        <p class="text-xs text-charcoal/40 mt-1">Add question &amp; answer pairs. Leave empty to hide the FAQ section on the product page.</p>
+      </div>
       <label class="flex items-center gap-2"><input type="checkbox" id="f_featured" class="!w-auto" ${p.featured ? 'checked' : ''}> <span class="text-sm">Featured</span></label>
       <label class="flex items-center gap-2"><input type="checkbox" id="f_active" class="!w-auto" ${p.active !== 0 ? 'checked' : ''}> <span class="text-sm">Active (visible)</span></label>
     </div>
@@ -111,6 +117,24 @@ window.editProduct = async (id) => {
   </div></div>`
   document.body.appendChild(modal)
   renderImgPreview()
+  const faqs = Array.isArray(p.faqs) ? p.faqs : []
+  if (faqs.length) faqs.forEach(f => addFaqRow(f.q, f.a)); else addFaqRow()
+}
+
+window.addFaqRow = (q = '', a = '') => {
+  const box = $('#faqRows'); if (!box) return
+  const row = document.createElement('div')
+  row.className = 'faq-row bg-white rounded-lg p-2 border border-rose/20'
+  row.innerHTML = `<div class="flex gap-2 items-start"><div class="flex-1 space-y-1">
+    <input class="faq-q text-sm" placeholder="Question" value="${(q || '').replace(/"/g, '&quot;')}">
+    <textarea class="faq-a text-sm" rows="2" placeholder="Answer">${a || ''}</textarea>
+    </div><button type="button" onclick="this.closest('.faq-row').remove()" class="text-red-400 hover:text-red-600 mt-1"><i class="fas fa-trash"></i></button></div>`
+  box.appendChild(row)
+}
+function getFaqs() {
+  return Array.from(document.querySelectorAll('#faqRows .faq-row')).map(r => ({
+    q: r.querySelector('.faq-q').value.trim(), a: r.querySelector('.faq-a').value.trim()
+  })).filter(f => f.q)
 }
 
 function getImgs() { return $('#f_images').value.split('\n').map(s => s.trim()).filter(Boolean) }
@@ -178,7 +202,8 @@ window.saveProduct = async (id) => {
     price: +$('#f_price').value, compare_price: +$('#f_compare').value, stock: +$('#f_stock').value, tags: $('#f_tags').value,
     images: $('#f_images').value.split('\n').map(s => s.trim()).filter(Boolean),
     is_affiliate: $('#f_affiliate').checked ? 1 : 0, affiliate_url: $('#f_affurl').value.trim(), auto_price_fetch: $('#f_autoprice').checked ? 1 : 0,
-    featured: $('#f_featured').checked ? 1 : 0, active: $('#f_active').checked ? 1 : 0
+    featured: $('#f_featured').checked ? 1 : 0, active: $('#f_active').checked ? 1 : 0,
+    highlights: ($('#f_highlights')?.value || '').trim(), faqs: getFaqs()
   }
   if (!payload.name) return toast('Name required', 'err')
   if (id) await api.put('/products/' + id, payload); else await api.post('/products', payload)

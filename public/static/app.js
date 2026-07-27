@@ -173,43 +173,106 @@ async function pageProduct() {
   const imgs = JSON.parse(p.images || '[]'); if (!imgs.length) imgs.push('https://via.placeholder.com/600x750?text=Nuvéllé')
   const off = p.compare_price > p.price ? Math.round((1 - p.price / p.compare_price) * 100) : 0
   const { data: related } = await axios.get('/api/products?category=' + p.category + '&limit=4')
+  const reviews = p.reviews || []
+  const faqs = Array.isArray(p.faqs) ? p.faqs : []
+  const hl = (p.highlights || '').split('\n').map(x => x.trim()).filter(Boolean)
+  // rating distribution
+  const dist = [5, 4, 3, 2, 1].map(n => reviews.filter(r => r.rating === n).length)
+  const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : p.rating
+  const revImages = reviews.flatMap(r => (r.media || [])).slice(0, 8)
   return `${nav()}
   <div class="max-w-7xl mx-auto px-5 py-10">
     <nav class="text-sm text-charcoal/50 mb-6"><a href="/" class="hover:text-mauve">Home</a> / <a href="/shop?category=${p.category}" class="hover:text-mauve">${p.category}</a> / <span class="text-wine">${p.name}</span></nav>
     <div class="grid md:grid-cols-2 gap-12">
-      <div>
+      <div class="md:sticky md:top-28 self-start">
         <div class="card !rounded-3xl aspect-[4/5] overflow-hidden mb-4"><img id="mainImg" src="${imgs[0]}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'"></div>
-        <div class="flex gap-3">${imgs.map((im, i) => `<img src="${im}" onclick="document.getElementById('mainImg').src='${im}'" class="w-20 h-24 object-cover rounded-xl cursor-pointer border-2 ${i === 0 ? 'border-mauve' : 'border-transparent'} hover:border-mauve" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'">`).join('')}</div>
+        <div class="flex gap-3 overflow-x-auto pb-1">${imgs.map((im, i) => `<img src="${im}" onclick="document.getElementById('mainImg').src='${im}';document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('border-mauve'));this.classList.add('border-mauve')" class="thumb w-20 h-24 object-cover rounded-xl cursor-pointer border-2 ${i === 0 ? 'border-mauve' : 'border-transparent'} hover:border-mauve shrink-0" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'">`).join('')}</div>
       </div>
       <div class="fade-up">
         <p class="text-mauve uppercase tracking-widest text-sm mb-2">${p.brand || ''}</p>
         <h1 class="font-serif text-4xl md:text-5xl text-wine mb-4">${p.name}</h1>
-        <div class="flex items-center gap-2 mb-5"><span class="text-gold">${'★'.repeat(Math.round(p.rating))}</span><span class="text-sm text-charcoal/60">${p.rating} · ${p.reviews_count} reviews</span></div>
-        <div class="flex items-center gap-3 mb-6"><span class="font-serif text-4xl text-wine font-semibold">${money(p.price)}</span>${off ? `<span class="text-xl text-charcoal/40 line-through">${money(p.compare_price)}</span><span class="badge-gold px-3 py-1 rounded-full text-sm">Save ${off}%</span>` : ''}</div>
-        <p class="text-charcoal/70 leading-relaxed mb-6">${p.description || ''}</p>
-        <div class="mb-6 text-sm">${p.stock > 0 ? `<span class="text-green-600"><i class="fas fa-check-circle"></i> In Stock</span>` : `<span class="text-red-500">Out of Stock</span>`}</div>
-        ${p.is_affiliate ? `<button onclick="track('affiliate_click',${p.id});window.open('${p.affiliate_url}','_blank')" class="btn btn-primary w-full py-4 text-lg mb-3"><i class="fas fa-external-link mr-2"></i>Buy Now — Best Deal</button>` : `<div class="flex gap-3 mb-3"><div class="flex items-center border-2 border-rose/40 rounded-full"><button onclick="qadj(-1)" class="px-4 py-3">−</button><span id="qty" class="px-4">1</span><button onclick="qadj(1)" class="px-4 py-3">+</button></div><button onclick="addProduct(${p.id})" class="btn btn-primary flex-1 py-4 text-lg"><i class="fas fa-bag-shopping mr-2"></i>Add to Bag</button></div>`}
-        <div class="grid grid-cols-3 gap-3 text-center text-xs text-charcoal/60 mt-6 pt-6 border-t border-rose/20"><div><i class="fas fa-truck-fast text-mauve text-lg mb-1"></i><br>Free Shipping</div><div><i class="fas fa-rotate-left text-mauve text-lg mb-1"></i><br>7-Day Returns</div><div><i class="fas fa-lock text-mauve text-lg mb-1"></i><br>Secure Payment</div></div>
+        <div class="flex items-center gap-2 mb-5"><span class="text-gold text-lg">${stars(avg)}</span><span class="text-sm text-charcoal/60">${(Math.round(avg * 10) / 10)} · ${reviews.length} review${reviews.length === 1 ? '' : 's'}</span><a href="#reviews" class="text-sm text-mauve hover:underline ml-1">See all</a></div>
+        <div class="flex items-center gap-3 mb-4"><span class="font-serif text-4xl text-wine font-semibold">${money(p.price)}</span>${off ? `<span class="text-xl text-charcoal/40 line-through">${money(p.compare_price)}</span><span class="badge-gold px-3 py-1 rounded-full text-sm">Save ${off}%</span>` : ''}</div>
+        <div class="mb-5 text-sm">${p.stock > 0 ? `<span class="text-green-600"><i class="fas fa-check-circle"></i> In Stock</span>` : `<span class="text-red-500"><i class="fas fa-circle-xmark"></i> Out of Stock</span>`}</div>
+        ${p.is_affiliate ? `<button onclick="track('affiliate_click',${p.id});window.open('${p.affiliate_url}','_blank')" class="btn btn-primary w-full py-4 text-lg mb-3"><i class="fas fa-external-link mr-2"></i>Buy Now — Best Deal</button>` : `<div class="flex gap-3 mb-3"><div class="flex items-center border-2 border-rose/40 rounded-full"><button onclick="qadj(-1)" class="px-4 py-3">−</button><span id="qty" class="px-4">1</span><button onclick="qadj(1)" class="px-4 py-3">+</button></div><button onclick="addProduct(${p.id})" ${p.stock <= 0 ? 'disabled' : ''} class="btn btn-primary flex-1 py-4 text-lg ${p.stock <= 0 ? 'opacity-50' : ''}"><i class="fas fa-bag-shopping mr-2"></i>Add to Bag</button></div><button onclick="buyNow(${p.id})" ${p.stock <= 0 ? 'disabled' : ''} class="btn btn-outline w-full py-3.5 mb-2 ${p.stock <= 0 ? 'opacity-50' : ''}"><i class="fas fa-bolt mr-2"></i>Buy Now</button>`}
+        <div class="grid grid-cols-3 gap-3 text-center text-xs text-charcoal/60 mt-4 pt-5 border-t border-rose/20"><div><i class="fas fa-truck-fast text-mauve text-lg mb-1"></i><br>Free Shipping</div><div><i class="fas fa-rotate-left text-mauve text-lg mb-1"></i><br>7-Day Returns</div><div><i class="fas fa-lock text-mauve text-lg mb-1"></i><br>Secure Payment</div></div>
+
+        <!-- Description BELOW the buy buttons -->
+        <div class="mt-6 pt-6 border-t border-rose/20">
+          <h3 class="font-serif text-2xl text-wine mb-3">Description</h3>
+          <p class="text-charcoal/70 leading-relaxed whitespace-pre-line">${p.description || 'No description available.'}</p>
+          ${hl.length ? `<ul class="mt-4 space-y-2">${hl.map(h => `<li class="flex items-start gap-2 text-sm text-charcoal/70"><i class="fas fa-check text-mauve mt-1"></i>${h}</li>`).join('')}</ul>` : ''}
+        </div>
       </div>
     </div>
-    <div class="mt-16"><h2 class="font-serif text-3xl text-wine mb-6">Customer Reviews</h2>
-      <div class="space-y-4 mb-8">${(p.reviews || []).length ? p.reviews.map(r => `<div class="card p-5"><div class="flex justify-between mb-2"><span class="font-medium">${r.customer_name}</span><span class="text-gold">${'★'.repeat(r.rating)}</span></div><p class="text-charcoal/70 text-sm">${r.comment}</p></div>`).join('') : '<p class="text-charcoal/50">No reviews yet. Be the first!</p>'}</div>
+
+    ${faqs.length ? `<section class="mt-16 max-w-3xl"><h2 class="font-serif text-3xl text-wine mb-6">Product FAQ</h2>
+      <div class="space-y-3">${faqs.map((f, i) => `<div class="card overflow-hidden"><button onclick="togglePfaq(${i})" class="w-full flex justify-between items-center p-5 text-left font-medium"><span>${escapeHtml(f.q)}</span><i id="pfaqi${i}" class="fas fa-plus text-mauve transition"></i></button><div id="pfaq${i}" class="hidden px-5 pb-5 text-charcoal/70 text-sm leading-relaxed">${escapeHtml(f.a)}</div></div>`).join('')}</div></section>` : ''}
+
+    <section id="reviews" class="mt-16">
+      <h2 class="font-serif text-3xl text-wine mb-6">Customer Reviews</h2>
+      <div class="grid md:grid-cols-3 gap-8 mb-8">
+        <div class="card p-6 text-center h-fit">
+          <p class="font-serif text-5xl text-wine">${Math.round(avg * 10) / 10}</p>
+          <p class="text-gold text-xl my-2">${stars(avg)}</p>
+          <p class="text-sm text-charcoal/50">${reviews.length} review${reviews.length === 1 ? '' : 's'}</p>
+          <div class="mt-4 space-y-1.5 text-left">${[5, 4, 3, 2, 1].map((n, i) => { const c = dist[i], pct = reviews.length ? Math.round(c / reviews.length * 100) : 0; return `<div class="flex items-center gap-2 text-xs"><span class="w-8 text-charcoal/60">${n}★</span><div class="flex-1 h-2 bg-rose/20 rounded-full overflow-hidden"><div class="h-full bg-gold" style="width:${pct}%"></div></div><span class="w-8 text-right text-charcoal/50">${c}</span></div>` }).join('')}</div>
+        </div>
+        <div class="md:col-span-2">
+          ${revImages.length ? `<div class="flex gap-2 mb-4 overflow-x-auto pb-1">${revImages.map(m => m.type === 'video' ? `<video src="${m.url}" class="w-20 h-20 object-cover rounded-xl shrink-0" muted onclick="this.paused?this.play():this.pause()"></video>` : `<img src="${m.url}" class="w-20 h-20 object-cover rounded-xl shrink-0 cursor-pointer" onclick="document.getElementById('mainImg').scrollIntoView({behavior:'smooth'})">`).join('')}</div>` : ''}
+          <div class="space-y-4">${reviews.length ? reviews.map(r => `<div class="card p-5"><div class="flex justify-between mb-2"><span class="font-medium">${escapeHtml(r.customer_name)}</span><span class="text-gold">${stars(r.rating)}</span></div><p class="text-charcoal/70 text-sm mb-2">${escapeHtml(r.comment)}</p>${(r.media && r.media.length) ? `<div class="flex gap-2 flex-wrap">${r.media.map(m => m.type === 'video' ? `<video src="${m.url}" class="w-24 h-24 object-cover rounded-lg" controls muted></video>` : `<img src="${m.url}" class="w-24 h-24 object-cover rounded-lg">`).join('')}</div>` : ''}<p class="text-[11px] text-charcoal/40 mt-2">${new Date(r.created_at).toLocaleDateString()}</p></div>`).join('') : '<p class="text-charcoal/50">No reviews yet. Be the first to review this product!</p>'}</div>
+        </div>
+      </div>
       <div class="card p-6 max-w-lg"><h3 class="font-serif text-xl text-wine mb-4">Write a Review</h3>
         <input id="rvName" placeholder="Your name" class="mb-3">
-        <select id="rvRating" class="mb-3"><option value="5">★★★★★ Excellent</option><option value="4">★★★★ Good</option><option value="3">★★★ Average</option><option value="2">★★ Poor</option><option value="1">★ Bad</option></select>
+        <div class="mb-3"><label class="text-xs text-charcoal/60 block mb-1">Your Rating</label><div id="rvStars" class="text-3xl text-rose cursor-pointer">${[1, 2, 3, 4, 5].map(n => `<span onclick="setRvStar(${n})" onmouseover="hoverRvStar(${n})" data-n="${n}" class="rv-star transition">☆</span>`).join('')}</div></div>
         <textarea id="rvComment" placeholder="Share your experience..." rows="3" class="mb-3"></textarea>
+        <div class="mb-3"><label class="btn btn-outline px-4 py-2 text-sm cursor-pointer inline-block"><i class="fas fa-camera mr-1"></i>Add Photos / Videos<input type="file" accept="image/*,video/*" multiple class="hidden" onchange="rvUpload(event)"></label><div id="rvMediaPreview" class="flex gap-2 flex-wrap mt-2"></div></div>
         <button onclick="submitReview(${p.id})" class="btn btn-primary px-6 py-2.5">Submit Review</button></div>
-    </div>
-    <div class="mt-16"><h2 class="font-serif text-3xl text-wine mb-6">You May Also Like</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-5">${related.filter(r => r.id != id).slice(0, 4).map(productCard).join('')}</div></div>
+    </section>
+    <section class="mt-16"><h2 class="font-serif text-3xl text-wine mb-6">You May Also Like</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-5">${related.filter(r => r.id != id).slice(0, 4).map(productCard).join('')}</div></section>
   </div>${footer()}`
 }
-let _qty = 1
+function stars(v) { const full = Math.round(v); return '★'.repeat(full) + '☆'.repeat(5 - full) }
+let _qty = 1, _rvRating = 0, _rvMedia = []
 window.qadj = (d) => { _qty = Math.max(1, _qty + d); $('#qty').textContent = _qty }
 window.addProduct = async (id) => { const { data: p } = await axios.get('/api/products/' + id); Cart.add(p, _qty) }
+window.buyNow = async (id) => { const { data: p } = await axios.get('/api/products/' + id); Cart.add(p, _qty); location.href = '/checkout' }
+window.togglePfaq = (i) => { const el = $('#pfaq' + i), ic = $('#pfaqi' + i); el.classList.toggle('hidden'); ic.classList.toggle('fa-plus'); ic.classList.toggle('fa-minus') }
+window.setRvStar = (n) => { _rvRating = n; paintRvStars(n) }
+window.hoverRvStar = (n) => paintRvStars(n)
+function paintRvStars(n) { document.querySelectorAll('.rv-star').forEach(s => { s.textContent = (+s.dataset.n <= n) ? '★' : '☆'; s.classList.toggle('text-gold', +s.dataset.n <= n) }) }
+window.rvUpload = async (ev) => {
+  const files = [...ev.target.files]; ev.target.value = ''
+  for (const file of files.slice(0, 5)) {
+    const isVideo = file.type.startsWith('video')
+    if (isVideo && file.size > 6000000) { toast('Video too large (max 6MB)', 'err'); continue }
+    try {
+      const url = isVideo ? await fileToRawDataUrl(file) : await fileToDataUrlImg(file)
+      _rvMedia.push({ type: isVideo ? 'video' : 'image', url })
+    } catch { toast('Failed to add media', 'err') }
+  }
+  renderRvMedia()
+}
+function renderRvMedia() {
+  const box = $('#rvMediaPreview'); if (!box) return
+  box.innerHTML = _rvMedia.map((m, i) => `<div class="relative">${m.type === 'video' ? `<video src="${m.url}" class="w-16 h-16 object-cover rounded-lg" muted></video>` : `<img src="${m.url}" class="w-16 h-16 object-cover rounded-lg">`}<button onclick="rmRvMedia(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-xs">×</button></div>`).join('')
+}
+window.rmRvMedia = (i) => { _rvMedia.splice(i, 1); renderRvMedia() }
+function fileToRawDataUrl(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file) }) }
+function fileToDataUrlImg(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => { const img = new Image(); img.onload = () => { const max = 800; let { width: w, height: h } = img; if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r) } const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h); resolve(cv.toDataURL('image/jpeg', 0.8)) }; img.onerror = reject; img.src = reader.result }
+    reader.onerror = reject; reader.readAsDataURL(file)
+  })
+}
 window.submitReview = async (id) => {
-  const name = $('#rvName').value.trim(), comment = $('#rvComment').value.trim(), rating = +$('#rvRating').value
-  if (!name || !comment) return toast('Please fill all fields', 'err')
-  await axios.post('/api/reviews', { product_id: id, customer_name: name, rating, comment }); toast('Thank you for your review!'); render()
+  const name = $('#rvName').value.trim(), comment = $('#rvComment').value.trim()
+  if (!name || !comment) return toast('Please fill name and comment', 'err')
+  if (!_rvRating) return toast('Please select a star rating', 'err')
+  await axios.post('/api/reviews', { product_id: id, customer_name: name, rating: _rvRating, comment, media: _rvMedia })
+  _rvRating = 0; _rvMedia = []; toast('Thank you for your review!'); render()
 }
 
 function pageCart() {

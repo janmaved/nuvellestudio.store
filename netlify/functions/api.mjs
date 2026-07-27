@@ -45,8 +45,8 @@ function seedData() {
       { id: 6, name: 'Fragrance', slug: 'fragrance', icon: 'fa-spray-can-sparkles', sort_order: 6 }
     ],
     products: [
-      p(1, 'Velvet Matte Lipstick - Ruby Rose', 'Long-lasting velvet matte finish lipstick enriched with vitamin E. Non-drying, transfer-proof formula in a stunning ruby shade.', 'makeup', 'lips', 'Nuvéllé Beauty', 649, 999, ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800'], 4.8, 342, 1, 'bestseller,matte,lipstick'),
-      p(2, '24K Gold Glow Serum', 'Luxurious anti-aging face serum infused with 24K gold flakes and hyaluronic acid for radiant, youthful skin.', 'skincare', 'serum', 'Aurelle', 1899, 2799, ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800', 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800'], 4.9, 521, 1, 'luxury,serum,gold'),
+      { ...p(1, 'Velvet Matte Lipstick - Ruby Rose', 'Long-lasting velvet matte finish lipstick enriched with vitamin E. Non-drying, transfer-proof formula in a stunning ruby shade.', 'makeup', 'lips', 'Nuvéllé Beauty', 649, 999, ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800'], 4.8, 342, 1, 'bestseller,matte,lipstick'), highlights: 'Long-lasting up to 12 hours\nEnriched with Vitamin E\nTransfer-proof & non-drying\nCruelty-free & vegan', faqs: [{ q: 'Is this lipstick waterproof?', a: 'Yes, it has a transfer-proof, smudge-resistant formula that stays put through meals and drinks.' }, { q: 'Is it suitable for dry lips?', a: 'Absolutely — it is infused with Vitamin E to keep your lips hydrated and comfortable all day.' }, { q: 'How do I remove it?', a: 'Use any oil-based makeup remover or micellar water for easy, gentle removal.' }] },
+      { ...p(2, '24K Gold Glow Serum', 'Luxurious anti-aging face serum infused with 24K gold flakes and hyaluronic acid for radiant, youthful skin.', 'skincare', 'serum', 'Aurelle', 1899, 2799, ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800', 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800'], 4.9, 521, 1, 'luxury,serum,gold'), highlights: 'Infused with real 24K gold flakes\nHyaluronic acid for deep hydration\nReduces fine lines & wrinkles\nSuitable for all skin types', faqs: [{ q: 'When should I apply this serum?', a: 'Apply 2-3 drops on cleansed skin morning and night, before moisturizer.' }, { q: 'Is it safe for sensitive skin?', a: 'Yes, it is dermatologically tested and formulated to be gentle on all skin types.' }] },
       p(3, 'Diamond Solitaire Necklace', 'Elegant 18K white gold plated solitaire pendant with premium cubic zirconia. Perfect for every occasion.', 'jewelry', 'necklace', 'Luxe Jewels', 2499, 4999, ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800', 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800'], 4.7, 198, 1, 'diamond,necklace,gift'),
       p(4, 'Silk Wrap Midi Dress', 'Flowing premium silk-blend wrap dress in emerald green. Timeless elegance for day to night.', 'fashion-women', 'dresses', 'Maison N', 3299, 5499, ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800'], 4.6, 156, 1, 'dress,silk,women'),
       p(5, 'Tailored Wool Blazer - Navy', 'Sharp, modern-fit blazer crafted from Italian wool. Elevate your wardrobe with timeless sophistication.', 'fashion-men', 'blazers', 'Sartor', 4599, 7999, ['https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800', 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800'], 4.8, 89, 1, 'blazer,men,formal'),
@@ -60,17 +60,17 @@ function seedData() {
     ],
     orders: [],
     reviews: [
-      { id: 1, product_id: 1, customer_name: 'Priya S.', rating: 5, comment: 'Absolutely love this lipstick! The color is stunning and lasts all day.', created_at: now() },
-      { id: 2, product_id: 1, customer_name: 'Ananya M.', rating: 5, comment: 'Best matte lipstick I have ever used. Highly recommend!', created_at: now() },
-      { id: 3, product_id: 2, customer_name: 'Riya K.', rating: 5, comment: 'My skin has never looked better. Worth every rupee.', created_at: now() },
-      { id: 4, product_id: 3, customer_name: 'Sneha P.', rating: 4, comment: 'Beautiful necklace, looks very premium. Fast delivery.', created_at: now() },
-      { id: 5, product_id: 6, customer_name: 'Arjun T.', rating: 5, comment: 'Amazing fragrance, gets so many compliments!', created_at: now() }
+      { id: 1, product_id: 1, customer_name: 'Priya S.', rating: 5, comment: 'Absolutely love this lipstick! The color is stunning and lasts all day.', media: [], created_at: now() },
+      { id: 2, product_id: 1, customer_name: 'Ananya M.', rating: 4, comment: 'Best matte lipstick I have ever used. Highly recommend!', media: [], created_at: now() },
+      { id: 3, product_id: 2, customer_name: 'Riya K.', rating: 5, comment: 'My skin has never looked better. Worth every rupee.', media: [], created_at: now() },
+      { id: 4, product_id: 3, customer_name: 'Sneha P.', rating: 4, comment: 'Beautiful necklace, looks very premium. Fast delivery.', media: [], created_at: now() },
+      { id: 5, product_id: 6, customer_name: 'Arjun T.', rating: 5, comment: 'Amazing fragrance, gets so many compliments!', media: [], created_at: now() }
     ],
     events: []
   }
 }
 function p(id, name, description, category, subcategory, brand, price, compare_price, images, rating, reviews_count, featured, tags) {
-  return { id, name, description, category, subcategory, brand, price, compare_price, currency: 'INR', images, stock: 100, rating, reviews_count, is_affiliate: 0, affiliate_url: '', auto_price_fetch: 0, featured, active: 1, tags, created_at: new Date().toISOString() }
+  return { id, name, description, category, subcategory, brand, price, compare_price, currency: 'INR', images, stock: 100, rating, reviews_count, is_affiliate: 0, affiliate_url: '', auto_price_fetch: 0, featured, active: 1, tags, highlights: '', faqs: [], created_at: new Date().toISOString() }
 }
 
 function resolveUrl(u, base) { try { if (!u) return ''; if (u.startsWith('//')) return 'https:' + u; if (u.startsWith('http')) return u; return new URL(u, base).href } catch { return u } }
@@ -108,7 +108,8 @@ export default async (req) => {
     if (path === '/categories' && method === 'GET') return json([...d.categories].sort((a, b) => a.sort_order - b.sort_order))
     if (path === '/settings' && method === 'GET') { const o = { ...d.settings }; delete o.payu_key; return json(o) }
     if (path === '/reviews' && method === 'POST') {
-      const r = { id: d.nextId++, product_id: body.product_id, customer_name: body.customer_name, rating: body.rating || 5, comment: body.comment || '', created_at: new Date().toISOString() }
+      const media = Array.isArray(body.media) ? body.media.slice(0, 5) : []
+      const r = { id: d.nextId++, product_id: body.product_id, customer_name: body.customer_name, rating: Math.max(1, Math.min(5, +body.rating || 5)), comment: body.comment || '', media, created_at: new Date().toISOString() }
       d.reviews.push(r)
       const prod = d.products.find(x => x.id == body.product_id)
       if (prod) { const rs = d.reviews.filter(x => x.product_id == body.product_id); prod.rating = Math.round((rs.reduce((s, x) => s + x.rating, 0) / rs.length) * 10) / 10; prod.reviews_count = rs.length }
@@ -277,7 +278,9 @@ function normalizeProduct(b) {
     images: Array.isArray(b.images) ? b.images : (b.images ? JSON.parse(b.images) : []),
     stock: b.stock ?? 100, is_affiliate: b.is_affiliate ? 1 : 0, affiliate_url: b.affiliate_url || '',
     auto_price_fetch: b.auto_price_fetch ? 1 : 0, featured: b.featured ? 1 : 0, active: b.active === 0 ? 0 : 1, tags: b.tags || '',
-    rating: b.rating ?? 4.5, reviews_count: b.reviews_count ?? 0
+    rating: b.rating ?? 4.5, reviews_count: b.reviews_count ?? 0,
+    faqs: Array.isArray(b.faqs) ? b.faqs.filter(f => f && f.q).map(f => ({ q: String(f.q), a: String(f.a || '') })) : [],
+    highlights: b.highlights || ''
   }
 }
 
