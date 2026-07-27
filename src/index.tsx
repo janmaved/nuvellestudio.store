@@ -77,7 +77,7 @@ app.post('/api/track', async (c) => {
 // ---------- Checkout / PayU ----------
 app.post('/api/checkout', async (c) => {
   const body = await c.req.json()
-  const orderNum = 'DIVA' + Date.now().toString().slice(-8)
+  const orderNum = 'NV' + Date.now().toString().slice(-8)
   const shippingFee = body.subtotal >= parseFloat(await getSetting(c.env.DB, 'free_shipping_threshold', '999')) ? 0 : parseFloat(await getSetting(c.env.DB, 'shipping_fee', '49'))
   const total = body.subtotal + shippingFee
   await c.env.DB.prepare(`INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, shipping_address, items, subtotal, shipping, total, status, payment_status)
@@ -239,15 +239,15 @@ admin.get('/stats', async (c) => {
 app.route('/api/admin', admin)
 
 // ==================== PAGES ====================
-app.get('/', (c) => c.html(renderer('DIVA — Beauty. Fashion. Luxury.', 'home')))
-app.get('/shop', (c) => c.html(renderer('Shop — DIVA', 'shop')))
-app.get('/product/:id', (c) => c.html(renderer('Product — DIVA', 'product')))
-app.get('/cart', (c) => c.html(renderer('Cart — DIVA', 'cart')))
-app.get('/checkout', (c) => c.html(renderer('Checkout — DIVA', 'checkout')))
-app.get('/about', (c) => c.html(renderer('About — DIVA', 'about')))
-app.get('/faq', (c) => c.html(renderer('FAQ — DIVA', 'faq')))
-app.get('/shipping', (c) => c.html(renderer('Shipping & Returns — DIVA', 'shipping')))
-app.get('/contact', (c) => c.html(renderer('Contact — DIVA', 'contact')))
+app.get('/', (c) => c.html(renderer('Nuvéllé — Beauty. Fashion. Luxury.', 'home')))
+app.get('/shop', (c) => c.html(renderer('Shop — Nuvéllé', 'shop')))
+app.get('/product/:id', (c) => c.html(renderer('Product — Nuvéllé', 'product')))
+app.get('/cart', (c) => c.html(renderer('Cart — Nuvéllé', 'cart')))
+app.get('/checkout', (c) => c.html(renderer('Checkout — Nuvéllé', 'checkout')))
+app.get('/about', (c) => c.html(renderer('About — Nuvéllé', 'about')))
+app.get('/faq', (c) => c.html(renderer('FAQ — Nuvéllé', 'faq')))
+app.get('/shipping', (c) => c.html(renderer('Shipping & Returns — Nuvéllé', 'shipping')))
+app.get('/contact', (c) => c.html(renderer('Contact — Nuvéllé', 'contact')))
 app.get('/admin', (c) => c.html(adminRenderer()))
 app.get('/favicon.ico', (c) => c.body('', 204))
 

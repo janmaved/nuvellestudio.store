@@ -1,4 +1,4 @@
-# DIVA — Premium Beauty, Jewelry & Fashion E-commerce
+# Nuvéllé — Premium Beauty, Jewelry & Fashion E-commerce
 
 A full-stack, aesthetic luxury e-commerce website (soft blush/rose/gold "diva" theme with rounded cards) for beauty, makeup, skincare, jewelry, fragrance and fashion (women & men). Built for Cloudflare Pages with Hono + D1.
 
@@ -56,6 +56,10 @@ pm2 start ecosystem.config.cjs   # http://localhost:3000
 
 ## 💳 PayU Integration
 Add your PayU merchant key in Admin → Settings. Orders are created server-side ready for PayU checkout redirect. (Your provided key can be entered there.)
+
+## 🌐 Hosting Options
+- **Cloudflare Pages (recommended, zero changes)**: uses the built-in D1 database. Run `npm run deploy` with a Cloudflare API token.
+- **Netlify**: possible, but Netlify does NOT support Cloudflare D1. You must switch the database to a Netlify-compatible provider (Supabase / Neon Postgres via REST) and update the DB calls in `src/index.tsx`. A `netlify.toml` is included. For no-hassle hosting, use Cloudflare Pages.
 
 ## 📦 Deployment
 - Platform: Cloudflare Pages

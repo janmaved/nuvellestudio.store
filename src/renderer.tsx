@@ -5,7 +5,7 @@ const HEAD = (title: string) => `
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title}</title>
-<meta name="description" content="DIVA — Premium beauty, makeup, jewelry & fashion. Curated luxury for the modern icon.">
+<meta name="description" content="Nuvéllé — Premium beauty, makeup, jewelry & fashion. Curated luxury for the modern icon.">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@ export function renderer(title: string, page: string) {
 }
 
 export function adminRenderer() {
-  return `${HEAD('Admin — DIVA')}
+  return `${HEAD('Admin — Nuvéllé')}
 <body class="bg-cream font-sans text-charcoal antialiased">
 <div id="admin-app"></div>
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>

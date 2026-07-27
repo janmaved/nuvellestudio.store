@@ -24,11 +24,12 @@ async function track(type, product_id, meta) { try { await axios.post('/api/trac
 
 // ---------- Layout ----------
 function nav() {
+  const A = SETTINGS.announcement || 'FREE SHIPPING · NEW ARRIVALS · AUTHENTIC LUXURY GUARANTEED'
   return `<header class="glass sticky top-0 z-50">
-    <div class="marquee badge-gold text-xs py-1.5 text-center"><span>✦ FREE SHIPPING OVER ${money(SETTINGS.free_shipping_threshold || 999)} ✦ NEW ARRIVALS EVERY WEEK ✦ AUTHENTIC LUXURY GUARANTEED ✦ FREE SHIPPING OVER ${money(SETTINGS.free_shipping_threshold || 999)} ✦ NEW ARRIVALS EVERY WEEK ✦ AUTHENTIC LUXURY GUARANTEED ✦</span></div>
+    <div class="marquee badge-gold text-xs py-1.5 text-center"><span>${A+" ✦ "+A+" ✦ "+A}</span></div>
     <nav class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
       <button class="md:hidden text-xl text-wine" onclick="openMenu()"><i class="fas fa-bars"></i></button>
-      <a href="/" class="font-serif text-3xl font-bold tracking-widest text-wine">${SETTINGS.store_name || 'DIVA'}</a>
+      <a href="/" class="font-serif text-3xl font-bold tracking-widest text-wine">${SETTINGS.store_name || 'Nuvéllé'}</a>
       <div class="hidden md:flex items-center gap-8 text-sm font-medium">
         <a href="/" class="hover:text-mauve transition">Home</a>
         <a href="/shop" class="hover:text-mauve transition">Shop</a>
@@ -51,7 +52,7 @@ function nav() {
   <aside id="mobileMenu" class="fixed inset-0 z-[60] hidden">
     <div class="overlay absolute inset-0 bg-black/40" onclick="closeMenu()"></div>
     <div class="drawer absolute left-0 top-0 h-full w-72 bg-cream p-6 -translate-x-full">
-      <div class="flex justify-between items-center mb-8"><span class="font-serif text-2xl text-wine font-bold">${SETTINGS.store_name || 'DIVA'}</span><button onclick="closeMenu()"><i class="fas fa-times text-xl"></i></button></div>
+      <div class="flex justify-between items-center mb-8"><span class="font-serif text-2xl text-wine font-bold">${SETTINGS.store_name || 'Nuvéllé'}</span><button onclick="closeMenu()"><i class="fas fa-times text-xl"></i></button></div>
       <a href="/" class="block py-3 border-b border-rose/20">Home</a><a href="/shop" class="block py-3 border-b border-rose/20">Shop</a>
       ${CATS.map(c => `<a href="/shop?category=${c.slug}" class="block py-3 border-b border-rose/20"><i class="fas ${c.icon} text-mauve mr-2"></i>${c.name}</a>`).join('')}
       <a href="/about" class="block py-3 border-b border-rose/20">About</a><a href="/faq" class="block py-3 border-b border-rose/20">FAQ</a><a href="/shipping" class="block py-3">Shipping & Returns</a>
@@ -66,23 +67,23 @@ window.doSearch = () => { const q = $('#searchInput').value.trim(); if (q) locat
 function footer() {
   return `<footer class="mt-24 bg-wine text-blush">
     <div class="max-w-7xl mx-auto px-5 py-14 grid md:grid-cols-4 gap-10">
-      <div><h3 class="font-serif text-3xl mb-3 text-white">${SETTINGS.store_name || 'DIVA'}</h3><p class="text-sm text-blush/80">${SETTINGS.store_tagline || 'Beauty. Fashion. Luxury.'}</p>
-        <div class="flex gap-4 mt-4 text-lg"><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-facebook"></i></a><a href="#"><i class="fab fa-pinterest"></i></a><a href="#"><i class="fab fa-tiktok"></i></a></div></div>
+      <div><h3 class="font-serif text-3xl mb-3 text-white">${SETTINGS.store_name || 'Nuvéllé'}</h3><p class="text-sm text-blush/80">${SETTINGS.store_tagline || 'Beauty. Fashion. Luxury.'}</p>
+        <div class="flex gap-4 mt-4 text-lg"><a href="${SETTINGS.social_instagram||'#'}" target="_blank"><i class="fab fa-instagram"></i></a><a href="${SETTINGS.social_facebook||'#'}" target="_blank"><i class="fab fa-facebook"></i></a><a href="${SETTINGS.social_pinterest||'#'}" target="_blank"><i class="fab fa-pinterest"></i></a></div></div>
       <div><h4 class="font-medium mb-4 text-white">Shop</h4><ul class="space-y-2 text-sm text-blush/80">${CATS.map(c => `<li><a href="/shop?category=${c.slug}" class="hover:text-white">${c.name}</a></li>`).join('')}</ul></div>
       <div><h4 class="font-medium mb-4 text-white">Help</h4><ul class="space-y-2 text-sm text-blush/80"><li><a href="/faq" class="hover:text-white">FAQ</a></li><li><a href="/shipping" class="hover:text-white">Shipping & Returns</a></li><li><a href="/contact" class="hover:text-white">Contact Us</a></li><li><a href="/about" class="hover:text-white">About Us</a></li></ul></div>
-      <div><h4 class="font-medium mb-4 text-white">Newsletter</h4><p class="text-sm text-blush/80 mb-3">Get 10% off your first order.</p><div class="flex gap-2"><input placeholder="Email" class="!bg-white/10 !border-white/20 !text-white placeholder:!text-blush/60"><button onclick="toast('Subscribed! Welcome to DIVA ✨')" class="btn bg-gold text-white px-4 whitespace-nowrap">Join</button></div></div>
+      <div><h4 class="font-medium mb-4 text-white">Newsletter</h4><p class="text-sm text-blush/80 mb-3">Get 10% off your first order.</p><div class="flex gap-2"><input placeholder="Email" class="!bg-white/10 !border-white/20 !text-white placeholder:!text-blush/60"><button onclick="toast('Subscribed! Welcome to Nuvéllé ✨')" class="btn bg-gold text-white px-4 whitespace-nowrap">Join</button></div></div>
     </div>
-    <div class="border-t border-white/10 py-5 text-center text-xs text-blush/70">© ${new Date().getFullYear()} ${SETTINGS.store_name || 'DIVA'}. All rights reserved. · Secure payments via PayU</div>
+    <div class="border-t border-white/10 py-5 text-center text-xs text-blush/70">${SETTINGS.footer_text ? SETTINGS.footer_text + ' · ' : ''}© ${new Date().getFullYear()} ${SETTINGS.store_name || 'Nuvéllé'}. All rights reserved. · Secure payments via PayU</div>
   </footer>`
 }
 
 // ---------- Product Card ----------
 function productCard(p) {
-  const imgs = JSON.parse(p.images || '[]'); const img = imgs[0] || 'https://via.placeholder.com/400x500?text=DIVA'
+  const imgs = JSON.parse(p.images || '[]'); const img = imgs[0] || 'https://via.placeholder.com/400x500?text=Nuvéllé'
   const off = p.compare_price > p.price ? Math.round((1 - p.price / p.compare_price) * 100) : 0
   return `<div class="card group fade-up">
     <a href="/product/${p.id}" class="block relative">
-      <div class="aspect-[4/5] overflow-hidden bg-softpink"><img src="${img}" class="pimg w-full h-full object-cover" loading="lazy" alt="${p.name}" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'"></div>
+      <div class="aspect-[4/5] overflow-hidden bg-softpink"><img src="${img}" class="pimg w-full h-full object-cover" loading="lazy" alt="${p.name}" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'"></div>
       ${off ? `<span class="absolute top-3 left-3 badge-gold text-xs px-2.5 py-1 rounded-full">-${off}%</span>` : ''}
       ${p.featured ? `<span class="absolute top-3 right-3 bg-white/90 text-mauve text-xs px-2.5 py-1 rounded-full"><i class="fas fa-star"></i></span>` : ''}
     </a>
@@ -113,10 +114,10 @@ async function pageHome() {
         <p class="text-mauve tracking-[.3em] text-sm mb-4">✦ LUXURY REDEFINED ✦</p>
         <h1 class="font-serif text-5xl md:text-7xl leading-tight text-wine mb-6">${SETTINGS.hero_title || 'Where Elegance Meets You'}</h1>
         <p class="text-charcoal/70 text-lg mb-8 max-w-md">${SETTINGS.hero_subtitle || 'Curated luxury beauty, jewelry & fashion for the modern icon.'}</p>
-        <div class="flex gap-4"><a href="/shop" class="btn btn-primary px-8 py-3.5">Shop Collection</a><a href="/about" class="btn btn-outline px-8 py-3.5">Our Story</a></div>
+        <div class="flex gap-4"><a href="/shop" class="btn btn-primary px-8 py-3.5">${SETTINGS.hero_cta||"Shop Collection"}</a><a href="/about" class="btn btn-outline px-8 py-3.5">Our Story</a></div>
       </div>
       <div class="fade-up grid grid-cols-2 gap-4">
-        <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover mt-8">
+        <img src="${SETTINGS.hero_image||'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500'" class="rounded-3xl shadow-xl h-64 w-full object-cover mt-8">
         <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover">
         <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover">
         <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover mt-8">
@@ -169,7 +170,7 @@ async function pageProduct() {
   const id = location.pathname.split('/').pop()
   const { data: p } = await axios.get('/api/products/' + id)
   track('view', id)
-  const imgs = JSON.parse(p.images || '[]'); if (!imgs.length) imgs.push('https://via.placeholder.com/600x750?text=DIVA')
+  const imgs = JSON.parse(p.images || '[]'); if (!imgs.length) imgs.push('https://via.placeholder.com/600x750?text=Nuvéllé')
   const off = p.compare_price > p.price ? Math.round((1 - p.price / p.compare_price) * 100) : 0
   const { data: related } = await axios.get('/api/products?category=' + p.category + '&limit=4')
   return `${nav()}
@@ -177,8 +178,8 @@ async function pageProduct() {
     <nav class="text-sm text-charcoal/50 mb-6"><a href="/" class="hover:text-mauve">Home</a> / <a href="/shop?category=${p.category}" class="hover:text-mauve">${p.category}</a> / <span class="text-wine">${p.name}</span></nav>
     <div class="grid md:grid-cols-2 gap-12">
       <div>
-        <div class="card !rounded-3xl aspect-[4/5] overflow-hidden mb-4"><img id="mainImg" src="${imgs[0]}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'"></div>
-        <div class="flex gap-3">${imgs.map((im, i) => `<img src="${im}" onclick="document.getElementById('mainImg').src='${im}'" class="w-20 h-24 object-cover rounded-xl cursor-pointer border-2 ${i === 0 ? 'border-mauve' : 'border-transparent'} hover:border-mauve" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'">`).join('')}</div>
+        <div class="card !rounded-3xl aspect-[4/5] overflow-hidden mb-4"><img id="mainImg" src="${imgs[0]}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'"></div>
+        <div class="flex gap-3">${imgs.map((im, i) => `<img src="${im}" onclick="document.getElementById('mainImg').src='${im}'" class="w-20 h-24 object-cover rounded-xl cursor-pointer border-2 ${i === 0 ? 'border-mauve' : 'border-transparent'} hover:border-mauve" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'">`).join('')}</div>
       </div>
       <div class="fade-up">
         <p class="text-mauve uppercase tracking-widest text-sm mb-2">${p.brand || ''}</p>
@@ -218,7 +219,7 @@ function pageCart() {
   return `${nav()}<div class="max-w-5xl mx-auto px-5 py-10">
     <h1 class="font-serif text-5xl text-wine mb-8">Shopping Bag</h1>
     ${items.length ? `<div class="grid md:grid-cols-3 gap-8"><div class="md:col-span-2 space-y-4">
-      ${items.map(i => `<div class="card p-4 flex gap-4 items-center"><img src="${i.image}" class="w-24 h-28 object-cover rounded-2xl" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'"><div class="flex-1"><h3 class="font-medium">${i.name}</h3><p class="text-wine font-serif text-lg">${money(i.price)}</p><div class="flex items-center gap-3 mt-2"><div class="flex items-center border border-rose/40 rounded-full text-sm"><button onclick="cartQty(${i.id},${i.qty - 1})" class="px-3 py-1">−</button><span class="px-2">${i.qty}</span><button onclick="cartQty(${i.id},${i.qty + 1})" class="px-3 py-1">+</button></div><button onclick="cartRemove(${i.id})" class="text-red-400 text-sm hover:text-red-600"><i class="fas fa-trash"></i></button></div></div><p class="font-serif text-xl text-wine">${money(i.price * i.qty)}</p></div>`).join('')}</div>
+      ${items.map(i => `<div class="card p-4 flex gap-4 items-center"><img src="${i.image}" class="w-24 h-28 object-cover rounded-2xl" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'"><div class="flex-1"><h3 class="font-medium">${i.name}</h3><p class="text-wine font-serif text-lg">${money(i.price)}</p><div class="flex items-center gap-3 mt-2"><div class="flex items-center border border-rose/40 rounded-full text-sm"><button onclick="cartQty(${i.id},${i.qty - 1})" class="px-3 py-1">−</button><span class="px-2">${i.qty}</span><button onclick="cartQty(${i.id},${i.qty + 1})" class="px-3 py-1">+</button></div><button onclick="cartRemove(${i.id})" class="text-red-400 text-sm hover:text-red-600"><i class="fas fa-trash"></i></button></div></div><p class="font-serif text-xl text-wine">${money(i.price * i.qty)}</p></div>`).join('')}</div>
       <div class="card p-6 h-fit"><h3 class="font-serif text-2xl text-wine mb-4">Order Summary</h3>
         <div class="flex justify-between mb-2 text-sm"><span>Subtotal</span><span>${money(sub)}</span></div>
         <div class="flex justify-between mb-2 text-sm"><span>Shipping</span><span>${ship === 0 ? '<span class="text-green-600">FREE</span>' : money(ship)}</span></div>
@@ -266,7 +267,7 @@ window.placeOrder = async () => {
 }
 
 function pageAbout() {
-  return `${nav()}<div class="hero-grad"><div class="max-w-4xl mx-auto px-5 py-24 text-center"><p class="text-mauve tracking-widest mb-3">OUR STORY</p><h1 class="font-serif text-6xl text-wine mb-6">The DIVA Philosophy</h1><p class="text-lg text-charcoal/70 leading-relaxed">Born from a passion for timeless elegance, DIVA curates the world's finest beauty, jewelry & fashion. We believe every woman and man deserves to feel like an icon.</p></div></div>
+  return `${nav()}<div class="hero-grad"><div class="max-w-4xl mx-auto px-5 py-24 text-center"><p class="text-mauve tracking-widest mb-3">OUR STORY</p><h1 class="font-serif text-6xl text-wine mb-6">The Nuvéllé Philosophy</h1><p class="text-lg text-charcoal/70 leading-relaxed">${SETTINGS.about_text||'Born from a passion for timeless elegance, Nuvéllé curates the finest beauty, jewelry & fashion.'}</p></div></div>
   <div class="max-w-5xl mx-auto px-5 py-16 grid md:grid-cols-3 gap-8 text-center">
     <div class="card p-8"><i class="fas fa-gem text-4xl text-mauve mb-4"></i><h3 class="font-serif text-2xl text-wine mb-2">Curated Luxury</h3><p class="text-charcoal/60 text-sm">Hand-picked premium products from trusted global brands.</p></div>
     <div class="card p-8"><i class="fas fa-heart text-4xl text-mauve mb-4"></i><h3 class="font-serif text-2xl text-wine mb-2">Made With Love</h3><p class="text-charcoal/60 text-sm">Every detail crafted to make you feel confident and beautiful.</p></div>
@@ -279,13 +280,13 @@ function pageFaq() {
     ['How long does delivery take?', 'Standard delivery takes 3-7 business days across India. Metro cities usually receive orders within 2-4 days. Express delivery is available at checkout.'],
     ['What is your return policy?', 'We offer a 7-day easy return policy from the date of delivery. Items must be unused, in original packaging with tags intact. Beauty and personal-care products that have been opened cannot be returned for hygiene reasons.'],
     ['How do I return or exchange an item?', 'Contact us via the Contact page or email within 7 days of delivery. Our team will arrange a pickup. Refunds are processed within 5-7 business days to your original payment method after quality check.'],
-    ['Are your products authentic?', 'Absolutely. Every product on DIVA is 100% authentic and sourced directly from authorized brands and distributors. We guarantee genuine luxury.'],
+    ['Are your products authentic?', 'Absolutely. Every product on Nuvéllé is 100% authentic and sourced directly from authorized brands and distributors. We guarantee genuine luxury.'],
     ['What payment methods do you accept?', 'We accept all major credit/debit cards, UPI, net banking and wallets, securely processed through PayU. All transactions are encrypted and safe.'],
     ['Is shipping free?', `Yes! We offer free shipping on all orders above ${money(SETTINGS.free_shipping_threshold || 999)}. Below that, a flat shipping fee of ${money(SETTINGS.shipping_fee || 49)} applies.`],
     ['Do you ship internationally?', 'Currently we ship across India. International shipping is coming soon — subscribe to our newsletter to be notified!'],
     ['How can I track my order?', 'Once your order ships, you will receive a tracking link via email and SMS. You can track your package in real time.']
   ]
-  return `${nav()}<div class="max-w-3xl mx-auto px-5 py-14"><h1 class="font-serif text-5xl text-wine text-center mb-3">Frequently Asked Questions</h1><p class="text-center text-charcoal/60 mb-10">Everything you need to know about shopping with DIVA</p>
+  return `${nav()}<div class="max-w-3xl mx-auto px-5 py-14"><h1 class="font-serif text-5xl text-wine text-center mb-3">Frequently Asked Questions</h1><p class="text-center text-charcoal/60 mb-10">Everything you need to know about shopping with Nuvéllé</p>
     <div class="space-y-3">${faqs.map((f, i) => `<div class="card overflow-hidden"><button onclick="toggleFaq(${i})" class="w-full flex justify-between items-center p-5 text-left font-medium"><span>${f[0]}</span><i id="faqi${i}" class="fas fa-plus text-mauve transition"></i></button><div id="faq${i}" class="hidden px-5 pb-5 text-charcoal/70 text-sm leading-relaxed">${f[1]}</div></div>`).join('')}</div></div>${footer()}`
 }
 window.toggleFaq = (i) => { const el = $('#faq' + i), ic = $('#faqi' + i); el.classList.toggle('hidden'); ic.classList.toggle('fa-plus'); ic.classList.toggle('fa-minus') }
@@ -303,7 +304,7 @@ function pageShipping() {
 
 function pageContact() {
   return `${nav()}<div class="max-w-2xl mx-auto px-5 py-14"><h1 class="font-serif text-5xl text-wine text-center mb-3">Get in Touch</h1><p class="text-center text-charcoal/60 mb-10">We'd love to hear from you</p>
-    <div class="grid grid-cols-3 gap-4 mb-8 text-center"><div class="card p-5"><i class="fas fa-envelope text-mauve text-xl mb-2"></i><p class="text-xs">care@diva.com</p></div><div class="card p-5"><i class="fas fa-phone text-mauve text-xl mb-2"></i><p class="text-xs">+91 98765 43210</p></div><div class="card p-5"><i class="fab fa-whatsapp text-mauve text-xl mb-2"></i><p class="text-xs">Chat with us</p></div></div>
+    <div class="grid grid-cols-3 gap-4 mb-8 text-center"><div class="card p-5"><i class="fas fa-envelope text-mauve text-xl mb-2"></i><p class="text-xs">${SETTINGS.contact_email||'care@nuvelle.com'}</p></div><div class="card p-5"><i class="fas fa-phone text-mauve text-xl mb-2"></i><p class="text-xs">${SETTINGS.contact_phone||'+91 98765 43210'}</p></div><div class="card p-5"><i class="fab fa-whatsapp text-mauve text-xl mb-2"></i><p class="text-xs">Chat with us</p></div></div>
     <div class="card p-8"><input placeholder="Your Name" class="mb-3"><input placeholder="Email" class="mb-3"><textarea placeholder="Your Message" rows="4" class="mb-3"></textarea><button onclick="toast('Message sent! We will reply within 24 hours ✨')" class="btn btn-primary w-full py-3.5">Send Message</button></div>
   </div>${footer()}`
 }
@@ -327,8 +328,21 @@ async function render() {
   } catch (e) { app.innerHTML = `${nav()}<div class="text-center py-32"><p class="text-xl text-charcoal/50">Something went wrong. <a href="/" class="text-mauve">Go Home</a></p></div>`; console.error(e) }
 }
 
+function applyTheme() {
+  const r = document.documentElement.style
+  if (SETTINGS.theme_primary) r.setProperty('--rose', SETTINGS.theme_primary)
+  if (SETTINGS.theme_secondary) r.setProperty('--mauve', SETTINGS.theme_secondary)
+  if (SETTINGS.theme_dark) r.setProperty('--wine', SETTINGS.theme_dark)
+  if (SETTINGS.theme_accent) r.setProperty('--gold', SETTINGS.theme_accent)
+  // override tailwind color utility classes to follow theme vars
+  let st = document.getElementById('theme-vars'); if (!st) { st = document.createElement('style'); st.id = 'theme-vars'; document.head.appendChild(st) }
+  st.textContent = `.text-mauve{color:var(--mauve)!important}.text-wine{color:var(--wine)!important}.text-gold{color:var(--gold)!important}.text-rose{color:var(--rose)!important}
+  .bg-mauve{background:var(--mauve)!important}.bg-wine{background:var(--wine)!important}.bg-rose{background:var(--rose)!important}.bg-gold{background:var(--gold)!important}
+  .border-mauve{border-color:var(--mauve)!important}`
+}
 async function boot() {
   try { const [{ data: s }, { data: cats }] = await Promise.all([axios.get('/api/settings'), axios.get('/api/categories')]); SETTINGS = s; CATS = cats } catch { }
+  applyTheme()
   render()
 }
 boot()

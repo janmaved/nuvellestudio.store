@@ -1,4 +1,4 @@
-// ==================== DIVA ADMIN ====================
+// ==================== Nuvéllé ADMIN ====================
 const $ = (s, e = document) => e.querySelector(s)
 const money = (n) => '₹' + Number(n || 0).toLocaleString('en-IN')
 let PIN = sessionStorage.getItem('diva_pin') || ''
@@ -18,7 +18,7 @@ function loginScreen() {
   return `<div class="min-h-screen flex items-center justify-center hero-grad px-5">
     <div class="card p-10 w-full max-w-sm text-center">
       <div class="w-16 h-16 mx-auto rounded-full bg-mauve flex items-center justify-center mb-5"><i class="fas fa-crown text-2xl text-white"></i></div>
-      <h1 class="font-serif text-3xl text-wine mb-1">DIVA Admin</h1>
+      <h1 class="font-serif text-3xl text-wine mb-1">Nuvéllé Admin</h1>
       <p class="text-charcoal/50 text-sm mb-6">Enter your PIN to continue</p>
       <input id="pinInput" type="password" placeholder="••••" maxlength="10" class="text-center text-2xl tracking-widest mb-4" onkeydown="if(event.key==='Enter')doLogin()">
       <button onclick="doLogin()" class="btn btn-primary w-full py-3">Unlock Dashboard</button>
@@ -36,12 +36,12 @@ function shell(content) {
   const tabs = [['dashboard', 'fa-chart-line', 'Dashboard'], ['products', 'fa-box', 'Products'], ['orders', 'fa-receipt', 'Orders'], ['categories', 'fa-tags', 'Categories'], ['settings', 'fa-gear', 'Settings']]
   return `<div class="flex min-h-screen">
     <aside class="w-60 bg-wine text-blush p-5 hidden md:block">
-      <div class="font-serif text-3xl text-white mb-8 tracking-widest">DIVA</div>
+      <div class="font-serif text-3xl text-white mb-8 tracking-widest">Nuvéllé</div>
       <nav class="space-y-1">${tabs.map(t => `<button onclick="setTab('${t[0]}')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition ${TAB === t[0] ? 'bg-white/15 text-white' : 'hover:bg-white/10'}"><i class="fas ${t[1]} w-5"></i>${t[2]}</button>`).join('')}</nav>
       <div class="mt-8 pt-6 border-t border-white/10"><a href="/" target="_blank" class="block px-4 py-2 text-sm hover:text-white"><i class="fas fa-store mr-2"></i>View Store</a><button onclick="logout()" class="w-full text-left px-4 py-2 text-sm hover:text-white"><i class="fas fa-sign-out-alt mr-2"></i>Logout</button></div>
     </aside>
     <main class="flex-1 bg-cream">
-      <header class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center md:hidden"><span class="font-serif text-2xl text-wine">DIVA Admin</span><select onchange="setTab(this.value)" class="!w-auto text-sm">${tabs.map(t => `<option value="${t[0]}" ${TAB === t[0] ? 'selected' : ''}>${t[2]}</option>`).join('')}</select></header>
+      <header class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center md:hidden"><span class="font-serif text-2xl text-wine">Nuvéllé Admin</span><select onchange="setTab(this.value)" class="!w-auto text-sm">${tabs.map(t => `<option value="${t[0]}" ${TAB === t[0] ? 'selected' : ''}>${t[2]}</option>`).join('')}</select></header>
       <div class="p-6 max-w-6xl">${content}</div>
     </main></div>`
 }
@@ -65,7 +65,7 @@ async function viewProducts() {
   return `<div class="flex justify-between items-center mb-6"><h1 class="font-serif text-4xl text-wine">Products</h1><div class="flex gap-2"><button onclick="refreshPrices()" class="btn btn-outline px-4 py-2.5 text-sm"><i class="fas fa-sync mr-1"></i>Refresh Affiliate Prices</button><button onclick="editProduct()" class="btn btn-primary px-5 py-2.5"><i class="fas fa-plus mr-1"></i>Add Product</button></div></div>
     <div class="card overflow-hidden"><table class="w-full text-sm"><thead class="bg-softpink text-wine"><tr><th class="text-left p-3">Product</th><th class="p-3">Category</th><th class="p-3">Price</th><th class="p-3">Stock</th><th class="p-3">Type</th><th class="p-3">Actions</th></tr></thead>
     <tbody>${products.map(p => { const img = (JSON.parse(p.images || '[]')[0] || ''); return `<tr class="border-t border-rose/10 hover:bg-softpink/40">
-      <td class="p-3 flex items-center gap-3"><img src="${img}" class="w-12 h-14 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://via.placeholder.com/48x56/F7E7E4/8C5A5A?text=DIVA'"><div><p class="font-medium">${p.name}</p><p class="text-xs text-charcoal/50">${p.brand || ''}</p></div></td>
+      <td class="p-3 flex items-center gap-3"><img src="${img}" class="w-12 h-14 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://via.placeholder.com/48x56/F7E7E4/8C5A5A?text=Nuvéllé'"><div><p class="font-medium">${p.name}</p><p class="text-xs text-charcoal/50">${p.brand || ''}</p></div></td>
       <td class="p-3 text-center">${p.category}</td><td class="p-3 text-center font-medium text-wine">${money(p.price)}</td><td class="p-3 text-center">${p.stock}</td>
       <td class="p-3 text-center">${p.is_affiliate ? '<span class="badge-gold text-xs px-2 py-0.5 rounded-full">Affiliate</span>' : '<span class="bg-rose/30 text-wine text-xs px-2 py-0.5 rounded-full">Own</span>'}${p.featured ? ' <i class="fas fa-star text-gold"></i>' : ''}</td>
       <td class="p-3 text-center whitespace-nowrap"><button onclick="editProduct(${p.id})" class="text-mauve hover:text-wine mr-3"><i class="fas fa-edit"></i></button><button onclick="delProduct(${p.id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td></tr>` }).join('')}</tbody></table></div>`
@@ -212,23 +212,25 @@ window.addCat = async () => { const name = $('#c_name').value.trim(), slug = $('
 window.delCat = async (id) => { if (!confirm('Delete category?')) return; await api.delete('/categories/' + id); toast('Deleted'); renderAdmin() }
 
 // ---------- Settings ----------
+const SETTING_KEYS = ['store_name', 'store_tagline', 'hero_title', 'hero_subtitle', 'hero_cta', 'hero_image', 'announcement', 'free_shipping_threshold', 'shipping_fee', 'payu_key', 'theme_primary', 'theme_secondary', 'theme_dark', 'theme_accent', 'about_text', 'contact_email', 'contact_phone', 'social_instagram', 'social_facebook', 'social_pinterest', 'footer_text']
 async function viewSettings() {
   const { data: s } = await api.get('/settings')
   const f = (k, label, hint = '') => `<div><label class="text-xs text-charcoal/60">${label}</label><input id="s_${k}" value="${(s[k] || '').replace(/"/g, '&quot;')}">${hint ? `<p class="text-xs text-charcoal/40 mt-1">${hint}</p>` : ''}</div>`
+  const ta = (k, label) => `<div class="md:col-span-2"><label class="text-xs text-charcoal/60">${label}</label><textarea id="s_${k}" rows="2">${s[k] || ''}</textarea></div>`
+  const color = (k, label) => `<div><label class="text-xs text-charcoal/60">${label}</label><div class="flex gap-2 items-center"><input type="color" id="s_${k}" value="${s[k] || '#E8B4B8'}" class="!w-14 !h-11 !p-1 cursor-pointer"><input value="${s[k] || ''}" oninput="document.getElementById('s_${k}').value=this.value" class="flex-1"></div></div>`
   return `<h1 class="font-serif text-4xl text-wine mb-6">Store Settings</h1>
-    <div class="card p-6 max-w-2xl grid md:grid-cols-2 gap-4">
-      ${f('store_name', 'Store Name')}${f('store_tagline', 'Tagline')}
-      <div class="md:col-span-2">${f('hero_title', 'Homepage Hero Title')}</div>
-      <div class="md:col-span-2"><label class="text-xs text-charcoal/60">Hero Subtitle</label><textarea id="s_hero_subtitle" rows="2">${s.hero_subtitle || ''}</textarea></div>
-      ${f('free_shipping_threshold', 'Free Shipping Above (₹)')}${f('shipping_fee', 'Shipping Fee (₹)')}
-      <div class="md:col-span-2">${f('payu_key', 'PayU Merchant Key', 'Your PayU key for payment processing')}</div>
-      <div class="md:col-span-2"><button onclick="saveSettings()" class="btn btn-primary px-8 py-3"><i class="fas fa-save mr-2"></i>Save Settings</button></div>
+    <div class="space-y-6 max-w-3xl">
+      <div class="card p-6"><h3 class="font-serif text-xl text-wine mb-4"><i class="fas fa-store text-mauve mr-2"></i>Brand</h3><div class="grid md:grid-cols-2 gap-4">${f('store_name', 'Store Name')}${f('store_tagline', 'Tagline')}${ta('footer_text', 'Footer Note (optional)')}</div></div>
+      <div class="card p-6"><h3 class="font-serif text-xl text-wine mb-4"><i class="fas fa-image text-mauve mr-2"></i>Homepage Hero & Banner</h3><div class="grid md:grid-cols-2 gap-4"><div class="md:col-span-2">${f('hero_title', 'Hero Title')}</div>${ta('hero_subtitle', 'Hero Subtitle')}${f('hero_cta', 'Hero Button Text')}${f('hero_image', 'Hero Image URL')}${ta('announcement', 'Top Announcement Bar Text')}</div></div>
+      <div class="card p-6"><h3 class="font-serif text-xl text-wine mb-4"><i class="fas fa-palette text-mauve mr-2"></i>Theme Colors</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4">${color('theme_primary', 'Primary')}${color('theme_secondary', 'Secondary')}${color('theme_dark', 'Dark / Text')}${color('theme_accent', 'Accent / Gold')}</div><p class="text-xs text-charcoal/40 mt-2">Changes apply across the whole website instantly after saving.</p></div>
+      <div class="card p-6"><h3 class="font-serif text-xl text-wine mb-4"><i class="fas fa-truck text-mauve mr-2"></i>Shipping & Payment</h3><div class="grid md:grid-cols-2 gap-4">${f('free_shipping_threshold', 'Free Shipping Above (₹)')}${f('shipping_fee', 'Shipping Fee (₹)')}<div class="md:col-span-2">${f('payu_key', 'PayU Merchant Key', 'Your PayU key for payments')}</div></div></div>
+      <div class="card p-6"><h3 class="font-serif text-xl text-wine mb-4"><i class="fas fa-address-book text-mauve mr-2"></i>Contact & Social</h3><div class="grid md:grid-cols-2 gap-4">${ta('about_text', 'About Us Text')}${f('contact_email', 'Contact Email')}${f('contact_phone', 'Contact Phone')}${f('social_instagram', 'Instagram URL')}${f('social_facebook', 'Facebook URL')}${f('social_pinterest', 'Pinterest URL')}</div></div>
+      <div class="sticky bottom-4"><button onclick="saveSettings()" class="btn btn-primary w-full py-4 text-lg shadow-xl"><i class="fas fa-save mr-2"></i>Save All Settings</button></div>
     </div>`
 }
 window.saveSettings = async () => {
-  const keys = ['store_name', 'store_tagline', 'hero_title', 'hero_subtitle', 'free_shipping_threshold', 'shipping_fee', 'payu_key']
-  const payload = {}; keys.forEach(k => { const el = $('#s_' + k); if (el) payload[k] = el.value })
-  await api.post('/settings', payload); toast('Settings saved')
+  const payload = {}; SETTING_KEYS.forEach(k => { const el = $('#s_' + k); if (el) payload[k] = el.value })
+  await api.post('/settings', payload); toast('Settings saved — refresh store to see changes')
 }
 
 // ---------- Render ----------
