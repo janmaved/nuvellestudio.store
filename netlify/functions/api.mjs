@@ -24,7 +24,7 @@ async function saveData(d) { await store().setJSON('data', d) }
 function seedData() {
   const now = () => new Date().toISOString()
   return {
-    nextId: 13,
+    nextId: 200,
     settings: {
       store_name: 'Nuvéllé', store_tagline: 'Beauty. Fashion. Luxury.', currency: 'INR',
       free_shipping_threshold: '999', shipping_fee: '49', payu_key: '',
@@ -45,7 +45,7 @@ function seedData() {
       { id: 6, name: 'Fragrance', slug: 'fragrance', icon: 'fa-spray-can-sparkles', sort_order: 6 }
     ],
     products: [
-      { ...p(1, 'Velvet Matte Lipstick - Ruby Rose', 'Long-lasting velvet matte finish lipstick enriched with vitamin E. Non-drying, transfer-proof formula in a stunning ruby shade.', 'makeup', 'lips', 'Nuvéllé Beauty', 649, 999, ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800'], 4.8, 342, 1, 'bestseller,matte,lipstick'), highlights: 'Long-lasting up to 12 hours\nEnriched with Vitamin E\nTransfer-proof & non-drying\nCruelty-free & vegan', faqs: [{ q: 'Is this lipstick waterproof?', a: 'Yes, it has a transfer-proof, smudge-resistant formula that stays put through meals and drinks.' }, { q: 'Is it suitable for dry lips?', a: 'Absolutely — it is infused with Vitamin E to keep your lips hydrated and comfortable all day.' }, { q: 'How do I remove it?', a: 'Use any oil-based makeup remover or micellar water for easy, gentle removal.' }] },
+      { ...p(1, 'Velvet Matte Lipstick - Ruby Rose', 'Long-lasting velvet matte finish lipstick enriched with vitamin E. Non-drying, transfer-proof formula in a stunning ruby shade.', 'makeup', 'lips', 'Nuvéllé Beauty', 649, 999, ['https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800'], 4.8, 342, 1, 'bestseller,matte,lipstick'), highlights: 'Long-lasting up to 12 hours\nEnriched with Vitamin E\nTransfer-proof & non-drying\nCruelty-free & vegan', faqs: [{ q: 'Is this lipstick waterproof?', a: 'Yes, it has a transfer-proof, smudge-resistant formula that stays put through meals and drinks.' }, { q: 'Is it suitable for dry lips?', a: 'Absolutely — it is infused with Vitamin E to keep your lips hydrated and comfortable all day.' }, { q: 'How do I remove it?', a: 'Use any oil-based makeup remover or micellar water for easy, gentle removal.' }], variants: [{ type: 'Shade', options: [{ label: 'Ruby Rose', color: '#B0304A', image: '', price: null }, { label: 'Nude Blush', color: '#C98986', image: '', price: null }, { label: 'Berry Wine', color: '#6E2438', image: '', price: null }, { label: 'Coral Kiss', color: '#E86A5A', image: '', price: null }] }] },
       { ...p(2, '24K Gold Glow Serum', 'Luxurious anti-aging face serum infused with 24K gold flakes and hyaluronic acid for radiant, youthful skin.', 'skincare', 'serum', 'Aurelle', 1899, 2799, ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800', 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800'], 4.9, 521, 1, 'luxury,serum,gold'), highlights: 'Infused with real 24K gold flakes\nHyaluronic acid for deep hydration\nReduces fine lines & wrinkles\nSuitable for all skin types', faqs: [{ q: 'When should I apply this serum?', a: 'Apply 2-3 drops on cleansed skin morning and night, before moisturizer.' }, { q: 'Is it safe for sensitive skin?', a: 'Yes, it is dermatologically tested and formulated to be gentle on all skin types.' }] },
       p(3, 'Diamond Solitaire Necklace', 'Elegant 18K white gold plated solitaire pendant with premium cubic zirconia. Perfect for every occasion.', 'jewelry', 'necklace', 'Luxe Jewels', 2499, 4999, ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800', 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800'], 4.7, 198, 1, 'diamond,necklace,gift'),
       p(4, 'Silk Wrap Midi Dress', 'Flowing premium silk-blend wrap dress in emerald green. Timeless elegance for day to night.', 'fashion-women', 'dresses', 'Maison N', 3299, 5499, ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800'], 4.6, 156, 1, 'dress,silk,women'),
@@ -66,11 +66,20 @@ function seedData() {
       { id: 4, product_id: 3, customer_name: 'Sneha P.', rating: 4, comment: 'Beautiful necklace, looks very premium. Fast delivery.', media: [], created_at: now() },
       { id: 5, product_id: 6, customer_name: 'Arjun T.', rating: 5, comment: 'Amazing fragrance, gets so many compliments!', media: [], created_at: now() }
     ],
+    blocks: [
+      { id: 101, type: 'hero', enabled: 1, sort: 1, data: {} },
+      { id: 102, type: 'category-grid', enabled: 1, sort: 2, data: { title: 'Shop by Category' } },
+      { id: 103, type: 'products', enabled: 1, sort: 3, data: { title: 'Bestsellers', filter: 'featured', limit: 8 } },
+      { id: 104, type: 'banner', enabled: 1, sort: 4, data: { title: 'The Gold Edit', subtitle: 'Discover our 24K luxury skincare collection', cta: 'Explore Now', link: '/shop?category=skincare', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200', align: 'left' } },
+      { id: 105, type: 'products', enabled: 1, sort: 5, data: { title: 'New Arrivals', filter: 'newest', limit: 4 } },
+      { id: 106, type: 'features', enabled: 1, sort: 6, data: {} },
+      { id: 107, type: 'newsletter', enabled: 1, sort: 7, data: { title: 'Join the Nuvéllé Circle', subtitle: 'Be first to know about new drops, exclusive offers & beauty tips.' } }
+    ],
     events: []
   }
 }
 function p(id, name, description, category, subcategory, brand, price, compare_price, images, rating, reviews_count, featured, tags) {
-  return { id, name, description, category, subcategory, brand, price, compare_price, currency: 'INR', images, stock: 100, rating, reviews_count, is_affiliate: 0, affiliate_url: '', auto_price_fetch: 0, featured, active: 1, tags, highlights: '', faqs: [], created_at: new Date().toISOString() }
+  return { id, name, description, category, subcategory, brand, price, compare_price, currency: 'INR', images, stock: 100, rating, reviews_count, is_affiliate: 0, affiliate_url: '', auto_price_fetch: 0, featured, active: 1, tags, highlights: '', faqs: [], variants: [], created_at: new Date().toISOString() }
 }
 
 function resolveUrl(u, base) { try { if (!u) return ''; if (u.startsWith('//')) return 'https:' + u; if (u.startsWith('http')) return u; return new URL(u, base).href } catch { return u } }
@@ -107,6 +116,7 @@ export default async (req) => {
     }
     if (path === '/categories' && method === 'GET') return json([...d.categories].sort((a, b) => a.sort_order - b.sort_order))
     if (path === '/settings' && method === 'GET') { const o = { ...d.settings }; delete o.payu_key; return json(o) }
+    if (path === '/blocks' && method === 'GET') return json([...(d.blocks || [])].filter(b => b.enabled !== 0).sort((a, b) => a.sort - b.sort))
     if (path === '/reviews' && method === 'POST') {
       const media = Array.isArray(body.media) ? body.media.slice(0, 5) : []
       const r = { id: d.nextId++, product_id: body.product_id, customer_name: body.customer_name, rating: Math.max(1, Math.min(5, +body.rating || 5)), comment: body.comment || '', media, created_at: new Date().toISOString() }
@@ -255,6 +265,48 @@ ${catalog}`
       const cm = ap.match(/^\/categories\/(\d+)$/)
       if (cm && method === 'DELETE') { d.categories = d.categories.filter(x => x.id != cm[1]); await saveData(d); return json({ success: true }) }
 
+      // ---- Blocks (homepage sections) ----
+      if (ap === '/blocks' && method === 'GET') return json([...(d.blocks || [])].sort((a, b) => a.sort - b.sort))
+      if (ap === '/blocks' && method === 'POST') {
+        if (!d.blocks) d.blocks = []
+        const maxSort = d.blocks.reduce((m, b) => Math.max(m, b.sort || 0), 0)
+        const nb = { id: d.nextId++, type: body.type || 'custom', enabled: body.enabled === 0 ? 0 : 1, sort: maxSort + 1, data: body.data || {} }
+        d.blocks.push(nb); await saveData(d); return json({ success: true, id: nb.id })
+      }
+      if (ap === '/blocks/reorder' && method === 'POST') {
+        const order = Array.isArray(body.order) ? body.order : []
+        order.forEach((id, i) => { const b = (d.blocks || []).find(x => x.id == id); if (b) b.sort = i + 1 })
+        await saveData(d); return json({ success: true })
+      }
+      const bm = ap.match(/^\/blocks\/(\d+)$/)
+      if (bm && method === 'PUT') { const b = (d.blocks || []).find(x => x.id == bm[1]); if (b) { if (body.type != null) b.type = body.type; if (body.enabled != null) b.enabled = body.enabled ? 1 : 0; if (body.data != null) b.data = body.data; await saveData(d) } return json({ success: true }) }
+      if (bm && method === 'DELETE') { d.blocks = (d.blocks || []).filter(x => x.id != bm[1]); await saveData(d); return json({ success: true }) }
+
+      // ---- AI Block Generator (Groq) ----
+      if (ap === '/ai-block' && method === 'POST') {
+        const s = d.settings
+        const sys = `You are an expert web designer for "${s.store_name || 'Nuvéllé'}", a premium beauty & fashion e-commerce store with a soft blush / rose-gold luxury aesthetic. Generate a single self-contained HTML section based on the user's request.
+
+STRICT RULES:
+- Output ONLY raw HTML (a single <section>...</section> or <div>...</div>). No markdown, no code fences, no explanation.
+- Use Tailwind CSS utility classes (Tailwind CDN is loaded). You MAY use inline style with the store's CSS variables: var(--rose)=${s.theme_primary || '#E8B4B8'}, var(--mauve)=${s.theme_secondary || '#C98986'}, var(--wine)=${s.theme_dark || '#8C5A5A'}, var(--gold)=${s.theme_accent || '#C9A96A'}.
+- Match the luxury rose-gold theme: soft pastels, rounded corners (rounded-2xl/3xl), elegant serif headings (use class "font-serif"), generous whitespace, subtle shadows.
+- Fully responsive (mobile-first). Use Font Awesome icons via <i class="fas fa-..."></i> (already loaded).
+- Do NOT include <script>, <style> tags, external links to other sites, or forms that post anywhere. Buttons/links may point to /shop or /product.
+- Keep it beautiful, on-brand, and ready to drop into the homepage.`
+        try {
+          const gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST', headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: GROQ_MODEL, temperature: 0.6, max_tokens: 1800, messages: [{ role: 'system', content: sys }, { role: 'user', content: String(body.prompt || 'A beautiful promotional section') }] })
+          })
+          if (!gr.ok) { const et = await gr.text(); return json({ success: false, error: et }, 200) }
+          const gj = await gr.json()
+          let html = gj.choices?.[0]?.message?.content || ''
+          html = html.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+          return json({ success: true, html })
+        } catch (e) { return json({ success: false, error: e.message }, 200) }
+      }
+
       if (ap === '/stats' && method === 'GET') {
         const revenue = d.orders.reduce((s, o) => s + (o.total || 0), 0)
         const views = d.events.filter(e => e.type === 'view').length
@@ -280,7 +332,13 @@ function normalizeProduct(b) {
     auto_price_fetch: b.auto_price_fetch ? 1 : 0, featured: b.featured ? 1 : 0, active: b.active === 0 ? 0 : 1, tags: b.tags || '',
     rating: b.rating ?? 4.5, reviews_count: b.reviews_count ?? 0,
     faqs: Array.isArray(b.faqs) ? b.faqs.filter(f => f && f.q).map(f => ({ q: String(f.q), a: String(f.a || '') })) : [],
-    highlights: b.highlights || ''
+    highlights: b.highlights || '',
+    variants: Array.isArray(b.variants) ? b.variants.filter(v => v && (v.name || v.type)).map(v => ({
+      type: String(v.type || 'Variant'),
+      options: Array.isArray(v.options) ? v.options.filter(o => o && o.label).map(o => ({
+        label: String(o.label), color: o.color ? String(o.color) : '', image: o.image ? String(o.image) : '', price: o.price != null && o.price !== '' ? +o.price : null
+      })) : []
+    })).filter(v => v.options.length) : []
   }
 }
 

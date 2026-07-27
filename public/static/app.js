@@ -6,9 +6,9 @@ let SETTINGS = {}, CATS = []
 const Cart = {
   get() { try { return JSON.parse(localStorage.getItem('diva_cart') || '[]') } catch { return [] } },
   save(c) { localStorage.setItem('diva_cart', JSON.stringify(c)); updateCartCount() },
-  add(p, qty = 1) { const c = this.get(); const i = c.find(x => x.id === p.id); if (i) i.qty += qty; else c.push({ id: p.id, name: p.name, price: p.price, image: (JSON.parse(p.images || '[]')[0] || ''), qty }); this.save(c); toast(`${p.name} added to bag`) },
-  remove(id) { this.save(this.get().filter(x => x.id !== id)) },
-  setQty(id, q) { const c = this.get(); const i = c.find(x => x.id === id); if (i) { i.qty = Math.max(1, q); this.save(c) } },
+  add(p, qty = 1, variant) { const c = this.get(); const vlabel = variant && variant.label ? variant.label : ''; const price = (variant && variant.priceOverride != null) ? variant.priceOverride : p.price; const key = p.id + (vlabel ? '::' + vlabel : ''); const i = c.find(x => x.key === key); if (i) i.qty += qty; else c.push({ key, id: p.id, name: p.name, variant: vlabel, price, image: (JSON.parse(p.images || '[]')[0] || ''), qty }); this.save(c); toast(`${p.name}${vlabel ? ' (' + vlabel + ')' : ''} added to bag`) },
+  remove(key) { this.save(this.get().filter(x => (x.key || x.id) !== key)) },
+  setQty(key, q) { const c = this.get(); const i = c.find(x => (x.key || x.id) === key); if (i) { i.qty = Math.max(1, q); this.save(c) } },
   count() { return this.get().reduce((s, x) => s + x.qty, 0) },
   subtotal() { return this.get().reduce((s, x) => s + x.price * x.qty, 0) }
 }
@@ -104,47 +104,64 @@ window.quickAdd = async (id) => {
 
 // ==================== PAGES ====================
 async function pageHome() {
-  const [{ data: featured }, { data: newest }] = await Promise.all([
-    axios.get('/api/products?featured=1&limit=8'), axios.get('/api/products?limit=8&sort=newest')
-  ])
-  return `${nav()}
-  <section class="hero-grad">
+  let blocks = []
+  try { const { data } = await axios.get('/api/blocks'); blocks = data } catch { }
+  if (!blocks.length) blocks = [{ type: 'hero', data: {} }, { type: 'category-grid', data: {} }, { type: 'products', data: { filter: 'featured', title: 'Bestsellers', limit: 8 } }, { type: 'features', data: {} }, { type: 'products', data: { filter: 'newest', title: 'New Arrivals', limit: 8 } }]
+  // preload product blocks
+  const html = []
+  for (const b of blocks) html.push(await renderBlock(b))
+  return `${nav()}${html.join('')}${footer()}`
+}
+
+async function renderBlock(b) {
+  const d = b.data || {}
+  if (b.type === 'hero') return `<section class="hero-grad">
     <div class="max-w-7xl mx-auto px-5 py-20 md:py-32 grid md:grid-cols-2 gap-10 items-center">
       <div class="fade-up">
-        <p class="text-mauve tracking-[.3em] text-sm mb-4">✦ LUXURY REDEFINED ✦</p>
-        <h1 class="font-serif text-5xl md:text-7xl leading-tight text-wine mb-6">${SETTINGS.hero_title || 'Where Elegance Meets You'}</h1>
-        <p class="text-charcoal/70 text-lg mb-8 max-w-md">${SETTINGS.hero_subtitle || 'Curated luxury beauty, jewelry & fashion for the modern icon.'}</p>
-        <div class="flex gap-4"><a href="/shop" class="btn btn-primary px-8 py-3.5">${SETTINGS.hero_cta||"Shop Collection"}</a><a href="/about" class="btn btn-outline px-8 py-3.5">Our Story</a></div>
+        <p class="text-mauve tracking-[.3em] text-sm mb-4">✦ ${d.eyebrow || 'LUXURY REDEFINED'} ✦</p>
+        <h1 class="font-serif text-5xl md:text-7xl leading-tight text-wine mb-6">${d.title || SETTINGS.hero_title || 'Where Elegance Meets You'}</h1>
+        <p class="text-charcoal/70 text-lg mb-8 max-w-md">${d.subtitle || SETTINGS.hero_subtitle || 'Curated luxury beauty, jewelry & fashion for the modern icon.'}</p>
+        <div class="flex gap-4"><a href="${d.link || '/shop'}" class="btn btn-primary px-8 py-3.5">${d.cta || SETTINGS.hero_cta || 'Shop Collection'}</a><a href="/about" class="btn btn-outline px-8 py-3.5">Our Story</a></div>
       </div>
       <div class="fade-up grid grid-cols-2 gap-4">
-        <img src="${SETTINGS.hero_image||'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500'" class="rounded-3xl shadow-xl h-64 w-full object-cover mt-8">
+        <img src="${d.image || SETTINGS.hero_image || 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500'}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500'" class="rounded-3xl shadow-xl h-64 w-full object-cover mt-8">
         <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover">
         <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover">
         <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?w=500" class="rounded-3xl shadow-xl h-64 w-full object-cover mt-8">
       </div>
-    </div>
-  </section>
-  <section class="max-w-7xl mx-auto px-5 py-14">
-    <h2 class="font-serif text-4xl text-center text-wine mb-10">Shop by Category</h2>
+    </div></section>`
+  if (b.type === 'category-grid') return `<section class="max-w-7xl mx-auto px-5 py-14">
+    <h2 class="font-serif text-4xl text-center text-wine mb-10">${d.title || 'Shop by Category'}</h2>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
       ${CATS.map(c => `<a href="/shop?category=${c.slug}" class="card p-6 text-center group"><div class="w-16 h-16 mx-auto rounded-full bg-softpink flex items-center justify-center mb-3 group-hover:bg-rose transition"><i class="fas ${c.icon} text-2xl text-mauve group-hover:text-white"></i></div><p class="text-sm font-medium">${c.name}</p></a>`).join('')}
-    </div>
-  </section>
-  <section class="max-w-7xl mx-auto px-5 py-8">
-    <div class="flex justify-between items-end mb-8"><h2 class="font-serif text-4xl text-wine">Bestsellers</h2><a href="/shop" class="text-mauve hover:text-wine text-sm">View All <i class="fas fa-arrow-right ml-1"></i></a></div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-5">${featured.map(productCard).join('')}</div>
-  </section>
-  <section class="hero-grad my-14"><div class="max-w-5xl mx-auto px-5 py-16 grid md:grid-cols-3 gap-8 text-center">
+    </div></section>`
+  if (b.type === 'products') {
+    const q = new URLSearchParams(); q.set('limit', d.limit || 8)
+    if (d.filter === 'featured') q.set('featured', '1'); else if (d.filter === 'newest') q.set('sort', 'newest'); else if (d.category) q.set('category', d.category)
+    let list = []; try { const { data } = await axios.get('/api/products?' + q.toString()); list = data } catch { }
+    return `<section class="max-w-7xl mx-auto px-5 py-8">
+      <div class="flex justify-between items-end mb-8"><h2 class="font-serif text-4xl text-wine">${d.title || 'Products'}</h2><a href="/shop" class="text-mauve hover:text-wine text-sm">View All <i class="fas fa-arrow-right ml-1"></i></a></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-5">${list.map(productCard).join('')}</div></section>`
+  }
+  if (b.type === 'banner') return `<section class="max-w-7xl mx-auto px-5 py-8"><div class="relative rounded-3xl overflow-hidden shadow-xl min-h-[280px] flex items-center" style="background:linear-gradient(90deg, rgba(140,90,90,.72), rgba(201,137,134,.35)), url('${d.image || 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200'}') center/cover">
+    <div class="p-10 md:p-16 max-w-lg ${d.align === 'right' ? 'ml-auto text-right' : ''}">
+      <h2 class="font-serif text-4xl md:text-5xl text-white mb-4">${d.title || 'Featured Collection'}</h2>
+      <p class="text-white/90 mb-6">${d.subtitle || ''}</p>
+      <a href="${d.link || '/shop'}" class="btn bg-white text-wine px-8 py-3.5 hover:bg-gold hover:text-white transition inline-block">${d.cta || 'Shop Now'}</a>
+    </div></div></section>`
+  if (b.type === 'features') return `<section class="hero-grad my-14"><div class="max-w-5xl mx-auto px-5 py-16 grid md:grid-cols-3 gap-8 text-center">
     <div><i class="fas fa-truck-fast text-3xl text-mauve mb-3"></i><h4 class="font-serif text-xl text-wine">Fast Delivery</h4><p class="text-sm text-charcoal/60">Free shipping over ${money(SETTINGS.free_shipping_threshold || 999)}</p></div>
     <div><i class="fas fa-shield-heart text-3xl text-mauve mb-3"></i><h4 class="font-serif text-xl text-wine">100% Authentic</h4><p class="text-sm text-charcoal/60">Genuine luxury products guaranteed</p></div>
     <div><i class="fas fa-rotate-left text-3xl text-mauve mb-3"></i><h4 class="font-serif text-xl text-wine">Easy Returns</h4><p class="text-sm text-charcoal/60">7-day hassle-free returns</p></div>
-  </div></section>
-  <section class="max-w-7xl mx-auto px-5 py-8">
-    <h2 class="font-serif text-4xl text-wine mb-8">New Arrivals</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-5">${newest.map(productCard).join('')}</div>
-  </section>
-  ${footer()}`
+  </div></section>`
+  if (b.type === 'newsletter') return `<section class="max-w-4xl mx-auto px-5 py-14"><div class="card p-10 md:p-14 text-center bg-softpink">
+    <h2 class="font-serif text-4xl text-wine mb-3">${d.title || 'Join the Circle'}</h2>
+    <p class="text-charcoal/70 mb-6 max-w-lg mx-auto">${d.subtitle || 'Be first to know about new drops & exclusive offers.'}</p>
+    <div class="flex gap-2 max-w-md mx-auto"><input id="nlEmail" placeholder="Enter your email" class="flex-1"><button onclick="subscribeNl()" class="btn btn-primary px-6">Subscribe</button></div></div></section>`
+  if (b.type === 'custom') return `<section class="block-custom">${d.html || ''}</section>`
+  return ''
 }
+window.subscribeNl = () => { const e = $('#nlEmail'); if (e && e.value.includes('@')) { toast('Thank you for subscribing! 💕'); e.value = '' } else toast('Please enter a valid email', 'err') }
 
 async function pageShop() {
   const params = new URLSearchParams(location.search)
@@ -175,6 +192,8 @@ async function pageProduct() {
   const { data: related } = await axios.get('/api/products?category=' + p.category + '&limit=4')
   const reviews = p.reviews || []
   const faqs = Array.isArray(p.faqs) ? p.faqs : []
+  const variants = Array.isArray(p.variants) ? p.variants : []
+  _variants = variants; _vsel = variants.map(() => 0)
   const hl = (p.highlights || '').split('\n').map(x => x.trim()).filter(Boolean)
   // rating distribution
   const dist = [5, 4, 3, 2, 1].map(n => reviews.filter(r => r.rating === n).length)
@@ -194,6 +213,7 @@ async function pageProduct() {
         <div class="flex items-center gap-2 mb-5"><span class="text-gold text-lg">${stars(avg)}</span><span class="text-sm text-charcoal/60">${(Math.round(avg * 10) / 10)} · ${reviews.length} review${reviews.length === 1 ? '' : 's'}</span><a href="#reviews" class="text-sm text-mauve hover:underline ml-1">See all</a></div>
         <div class="flex items-center gap-3 mb-4"><span class="font-serif text-4xl text-wine font-semibold">${money(p.price)}</span>${off ? `<span class="text-xl text-charcoal/40 line-through">${money(p.compare_price)}</span><span class="badge-gold px-3 py-1 rounded-full text-sm">Save ${off}%</span>` : ''}</div>
         <div class="mb-5 text-sm">${p.stock > 0 ? `<span class="text-green-600"><i class="fas fa-check-circle"></i> In Stock</span>` : `<span class="text-red-500"><i class="fas fa-circle-xmark"></i> Out of Stock</span>`}</div>
+        ${(variants.length ? variants.map((v, vi) => `<div class="mb-5"><div class="flex items-center gap-2 mb-2"><span class="text-sm font-medium text-wine">${escapeHtml(v.type)}:</span><span id="vsel${vi}" class="text-sm text-charcoal/60"></span></div><div class="flex gap-3 flex-wrap">${v.options.map((o, oi) => o.color ? `<button onclick="pickVariant(${vi},${oi})" data-v="${vi}" title="${escapeHtml(o.label)}" class="vopt vopt-${vi} w-9 h-9 rounded-full border-2 border-transparent shadow-sm ring-offset-2 hover:ring-2 hover:ring-mauve" style="background:${o.color}"></button>` : (o.image ? `<button onclick="pickVariant(${vi},${oi})" data-v="${vi}" title="${escapeHtml(o.label)}" class="vopt vopt-${vi} w-14 h-14 rounded-xl border-2 border-transparent overflow-hidden hover:border-mauve"><img src="${o.image}" class="w-full h-full object-cover"></button>` : `<button onclick="pickVariant(${vi},${oi})" data-v="${vi}" class="vopt vopt-${vi} px-4 py-2 rounded-full border-2 border-rose/40 text-sm hover:border-mauve">${escapeHtml(o.label)}</button>`)).join('')}</div></div>`).join('') : '')}
         ${p.is_affiliate ? `<button onclick="track('affiliate_click',${p.id});window.open('${p.affiliate_url}','_blank')" class="btn btn-primary w-full py-4 text-lg mb-3"><i class="fas fa-external-link mr-2"></i>Buy Now — Best Deal</button>` : `<div class="flex gap-3 mb-3"><div class="flex items-center border-2 border-rose/40 rounded-full"><button onclick="qadj(-1)" class="px-4 py-3">−</button><span id="qty" class="px-4">1</span><button onclick="qadj(1)" class="px-4 py-3">+</button></div><button onclick="addProduct(${p.id})" ${p.stock <= 0 ? 'disabled' : ''} class="btn btn-primary flex-1 py-4 text-lg ${p.stock <= 0 ? 'opacity-50' : ''}"><i class="fas fa-bag-shopping mr-2"></i>Add to Bag</button></div><button onclick="buyNow(${p.id})" ${p.stock <= 0 ? 'disabled' : ''} class="btn btn-outline w-full py-3.5 mb-2 ${p.stock <= 0 ? 'opacity-50' : ''}"><i class="fas fa-bolt mr-2"></i>Buy Now</button>`}
         <div class="grid grid-cols-3 gap-3 text-center text-xs text-charcoal/60 mt-4 pt-5 border-t border-rose/20"><div><i class="fas fa-truck-fast text-mauve text-lg mb-1"></i><br>Free Shipping</div><div><i class="fas fa-rotate-left text-mauve text-lg mb-1"></i><br>7-Day Returns</div><div><i class="fas fa-lock text-mauve text-lg mb-1"></i><br>Secure Payment</div></div>
 
@@ -234,10 +254,23 @@ async function pageProduct() {
   </div>${footer()}`
 }
 function stars(v) { const full = Math.round(v); return '★'.repeat(full) + '☆'.repeat(5 - full) }
-let _qty = 1, _rvRating = 0, _rvMedia = []
+let _qty = 1, _rvRating = 0, _rvMedia = [], _variants = [], _vsel = []
 window.qadj = (d) => { _qty = Math.max(1, _qty + d); $('#qty').textContent = _qty }
-window.addProduct = async (id) => { const { data: p } = await axios.get('/api/products/' + id); Cart.add(p, _qty) }
-window.buyNow = async (id) => { const { data: p } = await axios.get('/api/products/' + id); Cart.add(p, _qty); location.href = '/checkout' }
+window.pickVariant = (vi, oi) => {
+  _vsel[vi] = oi
+  document.querySelectorAll('.vopt-' + vi).forEach((b, i) => { b.classList.toggle('ring-2', i === oi); b.classList.toggle('ring-mauve', i === oi); b.classList.toggle('border-mauve', i === oi) })
+  const o = _variants[vi].options[oi]
+  const lbl = $('#vsel' + vi); if (lbl) lbl.textContent = o.label
+}
+function selectedVariant() {
+  if (!_variants.length) return { label: '', priceOverride: null }
+  const parts = _variants.map((v, vi) => { const o = v.options[_vsel[vi] || 0]; return { type: v.type, label: o.label, price: o.price } })
+  const label = parts.map(p => p.label).join(' / ')
+  const priceOverride = parts.reduce((acc, p) => p.price != null ? p.price : acc, null)
+  return { label, priceOverride }
+}
+window.addProduct = async (id) => { const { data: p } = await axios.get('/api/products/' + id); const sv = selectedVariant(); Cart.add(p, _qty, sv) }
+window.buyNow = async (id) => { const { data: p } = await axios.get('/api/products/' + id); const sv = selectedVariant(); Cart.add(p, _qty, sv); location.href = '/checkout' }
 window.togglePfaq = (i) => { const el = $('#pfaq' + i), ic = $('#pfaqi' + i); el.classList.toggle('hidden'); ic.classList.toggle('fa-plus'); ic.classList.toggle('fa-minus') }
 window.setRvStar = (n) => { _rvRating = n; paintRvStars(n) }
 window.hoverRvStar = (n) => paintRvStars(n)
@@ -282,7 +315,7 @@ function pageCart() {
   return `${nav()}<div class="max-w-5xl mx-auto px-5 py-10">
     <h1 class="font-serif text-5xl text-wine mb-8">Shopping Bag</h1>
     ${items.length ? `<div class="grid md:grid-cols-3 gap-8"><div class="md:col-span-2 space-y-4">
-      ${items.map(i => `<div class="card p-4 flex gap-4 items-center"><img src="${i.image}" class="w-24 h-28 object-cover rounded-2xl" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'"><div class="flex-1"><h3 class="font-medium">${i.name}</h3><p class="text-wine font-serif text-lg">${money(i.price)}</p><div class="flex items-center gap-3 mt-2"><div class="flex items-center border border-rose/40 rounded-full text-sm"><button onclick="cartQty(${i.id},${i.qty - 1})" class="px-3 py-1">−</button><span class="px-2">${i.qty}</span><button onclick="cartQty(${i.id},${i.qty + 1})" class="px-3 py-1">+</button></div><button onclick="cartRemove(${i.id})" class="text-red-400 text-sm hover:text-red-600"><i class="fas fa-trash"></i></button></div></div><p class="font-serif text-xl text-wine">${money(i.price * i.qty)}</p></div>`).join('')}</div>
+      ${items.map(i => { const k = i.key || i.id; return `<div class="card p-4 flex gap-4 items-center"><img src="${i.image}" class="w-24 h-28 object-cover rounded-2xl" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=Nuvéllé'"><div class="flex-1"><h3 class="font-medium">${i.name}</h3>${i.variant ? `<p class="text-xs text-mauve">${i.variant}</p>` : ''}<p class="text-wine font-serif text-lg">${money(i.price)}</p><div class="flex items-center gap-3 mt-2"><div class="flex items-center border border-rose/40 rounded-full text-sm"><button onclick="cartQty('${k}',${i.qty - 1})" class="px-3 py-1">−</button><span class="px-2">${i.qty}</span><button onclick="cartQty('${k}',${i.qty + 1})" class="px-3 py-1">+</button></div><button onclick="cartRemove('${k}')" class="text-red-400 text-sm hover:text-red-600"><i class="fas fa-trash"></i></button></div></div><p class="font-serif text-xl text-wine">${money(i.price * i.qty)}</p></div>` }).join('')}</div>
       <div class="card p-6 h-fit"><h3 class="font-serif text-2xl text-wine mb-4">Order Summary</h3>
         <div class="flex justify-between mb-2 text-sm"><span>Subtotal</span><span>${money(sub)}</span></div>
         <div class="flex justify-between mb-2 text-sm"><span>Shipping</span><span>${ship === 0 ? '<span class="text-green-600">FREE</span>' : money(ship)}</span></div>
@@ -293,8 +326,8 @@ function pageCart() {
       : `<div class="text-center py-20 text-charcoal/50"><i class="fas fa-bag-shopping text-6xl mb-4 text-rose"></i><p class="text-xl mb-6">Your bag is empty</p><a href="/shop" class="btn btn-primary px-8 py-3">Start Shopping</a></div>`}
   </div>${footer()}`
 }
-window.cartQty = (id, q) => { Cart.setQty(id, q); render() }
-window.cartRemove = (id) => { Cart.remove(id); render() }
+window.cartQty = (k, q) => { Cart.setQty(k, q); render() }
+window.cartRemove = (k) => { Cart.remove(k); render() }
 
 function pageCheckout() {
   const items = Cart.get(), sub = Cart.subtotal()
