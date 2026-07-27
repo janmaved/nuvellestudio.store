@@ -65,7 +65,7 @@ async function viewProducts() {
   return `<div class="flex justify-between items-center mb-6"><h1 class="font-serif text-4xl text-wine">Products</h1><div class="flex gap-2"><button onclick="refreshPrices()" class="btn btn-outline px-4 py-2.5 text-sm"><i class="fas fa-sync mr-1"></i>Refresh Affiliate Prices</button><button onclick="editProduct()" class="btn btn-primary px-5 py-2.5"><i class="fas fa-plus mr-1"></i>Add Product</button></div></div>
     <div class="card overflow-hidden"><table class="w-full text-sm"><thead class="bg-softpink text-wine"><tr><th class="text-left p-3">Product</th><th class="p-3">Category</th><th class="p-3">Price</th><th class="p-3">Stock</th><th class="p-3">Type</th><th class="p-3">Actions</th></tr></thead>
     <tbody>${products.map(p => { const img = (JSON.parse(p.images || '[]')[0] || ''); return `<tr class="border-t border-rose/10 hover:bg-softpink/40">
-      <td class="p-3 flex items-center gap-3"><img src="${img}" class="w-12 h-14 object-cover rounded-lg"><div><p class="font-medium">${p.name}</p><p class="text-xs text-charcoal/50">${p.brand || ''}</p></div></td>
+      <td class="p-3 flex items-center gap-3"><img src="${img}" class="w-12 h-14 object-cover rounded-lg" onerror="this.onerror=null;this.src='https://via.placeholder.com/48x56/F7E7E4/8C5A5A?text=DIVA'"><div><p class="font-medium">${p.name}</p><p class="text-xs text-charcoal/50">${p.brand || ''}</p></div></td>
       <td class="p-3 text-center">${p.category}</td><td class="p-3 text-center font-medium text-wine">${money(p.price)}</td><td class="p-3 text-center">${p.stock}</td>
       <td class="p-3 text-center">${p.is_affiliate ? '<span class="badge-gold text-xs px-2 py-0.5 rounded-full">Affiliate</span>' : '<span class="bg-rose/30 text-wine text-xs px-2 py-0.5 rounded-full">Own</span>'}${p.featured ? ' <i class="fas fa-star text-gold"></i>' : ''}</td>
       <td class="p-3 text-center whitespace-nowrap"><button onclick="editProduct(${p.id})" class="text-mauve hover:text-wine mr-3"><i class="fas fa-edit"></i></button><button onclick="delProduct(${p.id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td></tr>` }).join('')}</tbody></table></div>`
@@ -89,7 +89,14 @@ window.editProduct = async (id) => {
       <div><label class="text-xs text-charcoal/60">Compare Price (₹)</label><input id="f_compare" type="number" value="${p.compare_price || 0}"></div>
       <div><label class="text-xs text-charcoal/60">Stock</label><input id="f_stock" type="number" value="${p.stock ?? 100}"></div>
       <div><label class="text-xs text-charcoal/60">Tags (comma)</label><input id="f_tags" value="${p.tags || ''}"></div>
-      <div class="md:col-span-2"><label class="text-xs text-charcoal/60">Image URLs (one per line)</label><textarea id="f_images" rows="3" placeholder="https://...">${(p.images || []).join('\n')}</textarea></div>
+      <div class="md:col-span-2"><label class="text-xs text-charcoal/60">Product Images</label>
+        <div class="flex flex-wrap gap-2 mb-2" id="imgPreview"></div>
+        <div class="flex gap-2 mb-2">
+          <label class="btn btn-outline px-4 py-2 text-sm cursor-pointer flex-1 text-center"><i class="fas fa-upload mr-1"></i>Upload from Computer<input type="file" accept="image/*" multiple class="hidden" onchange="uploadImages(event)"></label>
+        </div>
+        <textarea id="f_images" rows="3" placeholder="Or paste image URLs (one per line)" oninput="renderImgPreview()">${(p.images || []).join('\n')}</textarea>
+        <p class="text-xs text-charcoal/40 mt-1">Upload photos from your computer, or paste URLs. For affiliate products use "Fetch Price" to auto-pull images.</p>
+      </div>
       <div class="md:col-span-2 bg-softpink rounded-xl p-4">
         <label class="flex items-center gap-2 mb-2"><input type="checkbox" id="f_affiliate" class="!w-auto" ${p.is_affiliate ? 'checked' : ''} onchange="document.getElementById('affBox').classList.toggle('hidden',!this.checked)"> <span class="text-sm font-medium">This is an Affiliate Product</span></label>
         <div id="affBox" class="${p.is_affiliate ? '' : 'hidden'} space-y-2">
@@ -103,14 +110,67 @@ window.editProduct = async (id) => {
     <button onclick="saveProduct(${id || 'null'})" class="btn btn-primary w-full py-3 mt-5"><i class="fas fa-save mr-2"></i>Save Product</button>
   </div></div>`
   document.body.appendChild(modal)
+  renderImgPreview()
 }
+
+function getImgs() { return $('#f_images').value.split('\n').map(s => s.trim()).filter(Boolean) }
+function setImgs(arr) { $('#f_images').value = arr.join('\n'); renderImgPreview() }
+window.renderImgPreview = () => {
+  const box = $('#imgPreview'); if (!box) return
+  const imgs = getImgs()
+  box.innerHTML = imgs.map((u, i) => `<div class="relative"><img src="${u}" class="w-16 h-20 object-cover rounded-lg border border-rose/30" onerror="this.src='https://via.placeholder.com/64x80?text=X'"><button onclick="removeImg(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-xs">×</button></div>`).join('')
+}
+window.removeImg = (i) => { const a = getImgs(); a.splice(i, 1); setImgs(a) }
+
+// Upload images from computer -> compress to data URL and store in the images list
+window.uploadImages = async (ev) => {
+  const files = [...ev.target.files]; if (!files.length) return
+  toast('Processing image(s)...')
+  const arr = getImgs()
+  for (const file of files) {
+    try { arr.push(await fileToDataUrl(file)) } catch { toast('Failed one image', 'err') }
+  }
+  setImgs(arr); toast(files.length + ' image(s) added')
+  ev.target.value = ''
+}
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const img = new Image()
+      img.onload = () => {
+        const max = 900; let { width: w, height: h } = img
+        if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r) }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h
+        cv.getContext('2d').drawImage(img, 0, 0, w, h)
+        resolve(cv.toDataURL('image/jpeg', 0.82))
+      }
+      img.onerror = reject; img.src = reader.result
+    }
+    reader.onerror = reject; reader.readAsDataURL(file)
+  })
+}
+
 window.fetchPrice = async () => {
   const url = $('#f_affurl').value.trim(); if (!url) return toast('Enter URL first', 'err')
-  toast('Fetching...'); const { data } = await api.post('/fetch-price', { url })
+  toast('Fetching product details...')
+  const { data } = await api.post('/fetch-price', { url })
   if (data.price) { $('#f_price').value = data.price; toast('Price fetched: ' + money(data.price)) }
-  if (data.title && !$('#f_name').value) $('#f_name').value = data.title
-  if (data.image && !$('#f_images').value) $('#f_images').value = data.image
-  if (!data.price) toast('Could not auto-detect price, please enter manually', 'err')
+  if (data.title && !$('#f_name').value.trim()) $('#f_name').value = data.title
+  // Fetch images and proxy them to base64 so they always display (no hotlink/broken images)
+  const fetched = (data.images && data.images.length ? data.images : (data.image ? [data.image] : []))
+  if (fetched.length) {
+    toast('Fetching product images...')
+    const arr = getImgs()
+    for (const u of fetched.slice(0, 4)) {
+      try { const { data: pr } = await api.post('/proxy-image', { url: u }); arr.push(pr.success && pr.dataUrl ? pr.dataUrl : u) }
+      catch { arr.push(u) }
+    }
+    setImgs([...new Set(arr)])
+    toast('Product images added ✓')
+  } else if (!data.price) {
+    toast('Could not auto-detect — enter details manually', 'err')
+  }
 }
 window.saveProduct = async (id) => {
   const payload = {

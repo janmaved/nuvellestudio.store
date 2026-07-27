@@ -82,7 +82,7 @@ function productCard(p) {
   const off = p.compare_price > p.price ? Math.round((1 - p.price / p.compare_price) * 100) : 0
   return `<div class="card group fade-up">
     <a href="/product/${p.id}" class="block relative">
-      <div class="aspect-[4/5] overflow-hidden bg-softpink"><img src="${img}" class="pimg w-full h-full object-cover" loading="lazy" alt="${p.name}"></div>
+      <div class="aspect-[4/5] overflow-hidden bg-softpink"><img src="${img}" class="pimg w-full h-full object-cover" loading="lazy" alt="${p.name}" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'"></div>
       ${off ? `<span class="absolute top-3 left-3 badge-gold text-xs px-2.5 py-1 rounded-full">-${off}%</span>` : ''}
       ${p.featured ? `<span class="absolute top-3 right-3 bg-white/90 text-mauve text-xs px-2.5 py-1 rounded-full"><i class="fas fa-star"></i></span>` : ''}
     </a>
@@ -177,8 +177,8 @@ async function pageProduct() {
     <nav class="text-sm text-charcoal/50 mb-6"><a href="/" class="hover:text-mauve">Home</a> / <a href="/shop?category=${p.category}" class="hover:text-mauve">${p.category}</a> / <span class="text-wine">${p.name}</span></nav>
     <div class="grid md:grid-cols-2 gap-12">
       <div>
-        <div class="card !rounded-3xl aspect-[4/5] overflow-hidden mb-4"><img id="mainImg" src="${imgs[0]}" class="w-full h-full object-cover"></div>
-        <div class="flex gap-3">${imgs.map((im, i) => `<img src="${im}" onclick="document.getElementById('mainImg').src='${im}'" class="w-20 h-24 object-cover rounded-xl cursor-pointer border-2 ${i === 0 ? 'border-mauve' : 'border-transparent'} hover:border-mauve">`).join('')}</div>
+        <div class="card !rounded-3xl aspect-[4/5] overflow-hidden mb-4"><img id="mainImg" src="${imgs[0]}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'"></div>
+        <div class="flex gap-3">${imgs.map((im, i) => `<img src="${im}" onclick="document.getElementById('mainImg').src='${im}'" class="w-20 h-24 object-cover rounded-xl cursor-pointer border-2 ${i === 0 ? 'border-mauve' : 'border-transparent'} hover:border-mauve" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'">`).join('')}</div>
       </div>
       <div class="fade-up">
         <p class="text-mauve uppercase tracking-widest text-sm mb-2">${p.brand || ''}</p>
@@ -218,7 +218,7 @@ function pageCart() {
   return `${nav()}<div class="max-w-5xl mx-auto px-5 py-10">
     <h1 class="font-serif text-5xl text-wine mb-8">Shopping Bag</h1>
     ${items.length ? `<div class="grid md:grid-cols-3 gap-8"><div class="md:col-span-2 space-y-4">
-      ${items.map(i => `<div class="card p-4 flex gap-4 items-center"><img src="${i.image}" class="w-24 h-28 object-cover rounded-2xl"><div class="flex-1"><h3 class="font-medium">${i.name}</h3><p class="text-wine font-serif text-lg">${money(i.price)}</p><div class="flex items-center gap-3 mt-2"><div class="flex items-center border border-rose/40 rounded-full text-sm"><button onclick="cartQty(${i.id},${i.qty - 1})" class="px-3 py-1">−</button><span class="px-2">${i.qty}</span><button onclick="cartQty(${i.id},${i.qty + 1})" class="px-3 py-1">+</button></div><button onclick="cartRemove(${i.id})" class="text-red-400 text-sm hover:text-red-600"><i class="fas fa-trash"></i></button></div></div><p class="font-serif text-xl text-wine">${money(i.price * i.qty)}</p></div>`).join('')}</div>
+      ${items.map(i => `<div class="card p-4 flex gap-4 items-center"><img src="${i.image}" class="w-24 h-28 object-cover rounded-2xl" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x500/F7E7E4/8C5A5A?text=DIVA'"><div class="flex-1"><h3 class="font-medium">${i.name}</h3><p class="text-wine font-serif text-lg">${money(i.price)}</p><div class="flex items-center gap-3 mt-2"><div class="flex items-center border border-rose/40 rounded-full text-sm"><button onclick="cartQty(${i.id},${i.qty - 1})" class="px-3 py-1">−</button><span class="px-2">${i.qty}</span><button onclick="cartQty(${i.id},${i.qty + 1})" class="px-3 py-1">+</button></div><button onclick="cartRemove(${i.id})" class="text-red-400 text-sm hover:text-red-600"><i class="fas fa-trash"></i></button></div></div><p class="font-serif text-xl text-wine">${money(i.price * i.qty)}</p></div>`).join('')}</div>
       <div class="card p-6 h-fit"><h3 class="font-serif text-2xl text-wine mb-4">Order Summary</h3>
         <div class="flex justify-between mb-2 text-sm"><span>Subtotal</span><span>${money(sub)}</span></div>
         <div class="flex justify-between mb-2 text-sm"><span>Shipping</span><span>${ship === 0 ? '<span class="text-green-600">FREE</span>' : money(ship)}</span></div>

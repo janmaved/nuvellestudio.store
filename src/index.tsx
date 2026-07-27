@@ -17,6 +17,9 @@ async function getSetting(db: D1Database, key: string, def = '') {
 function parseImages(s: string): string[] {
   try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a.map(x => String(x).trim()) : [] } catch { return [] }
 }
+function resolveUrl(u: string, base: string): string {
+  try { if (!u) return ''; if (u.startsWith('//')) return 'https:' + u; if (u.startsWith('http')) return u; return new URL(u, base).href } catch { return u }
+}
 
 // ==================== PUBLIC API ====================
 app.get('/api/products', async (c) => {
@@ -121,37 +124,64 @@ admin.delete('/products/:id', async (c) => {
   return c.json({ success: true })
 })
 
-// Fetch price from affiliate link (attempts to scrape price meta from product page)
+// Fetch price + images from affiliate link (scrapes product page metadata)
 admin.post('/fetch-price', async (c) => {
   const { url } = await c.req.json()
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DivaBot/1.0)' } })
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36', 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' }, redirect: 'follow' })
     const html = await res.text()
-    let price = 0, title = '', image = ''
-    const metaPrice = html.match(/<meta[^>]+property=["'](?:product:price:amount|og:price:amount)["'][^>]+content=["']([\d.,]+)["']/i)
-      || html.match(/["'](?:price|salePrice|finalPrice)["']\s*:\s*["']?([\d.,]+)/i)
-      || html.match(/₹\s*([\d,]+(?:\.\d+)?)/)
+    let price = 0, title = '', images: string[] = []
+    const metaPrice = html.match(/<meta[^>]+(?:property|itemprop|name)=["'](?:product:price:amount|og:price:amount|price)["'][^>]+content=["']([\d.,]+)["']/i)
+      || html.match(/["'](?:price|salePrice|finalPrice|sellingPrice|priceAmount)["']\s*:\s*["']?([\d]+(?:[.,]\d+)?)/i)
+      || html.match(/[₹$€£]\s*([\d,]+(?:\.\d{1,2})?)/)
     if (metaPrice) price = parseFloat(metaPrice[1].replace(/,/g, ''))
-    const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) || html.match(/<title>([^<]+)<\/title>/i)
-    if (ogTitle) title = ogTitle[1].trim()
-    const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-    if (ogImage) image = ogImage[1].trim()
-    return c.json({ success: true, price, title, image })
+    const ogTitle = html.match(/<meta[^>]+(?:property|name)=["'](?:og:title|twitter:title)["'][^>]+content=["']([^"']+)["']/i) || html.match(/<title>([^<]+)<\/title>/i)
+    if (ogTitle) title = ogTitle[1].trim().replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+    // Collect og:image + twitter:image + first few JSON "image" fields
+    const imgRe = /<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url|:url)?|twitter:image)["'][^>]+content=["']([^"']+)["']/gi
+    let m
+    while ((m = imgRe.exec(html)) && images.length < 6) { const u = resolveUrl(m[1].trim(), url); if (u && !images.includes(u)) images.push(u) }
+    const jsonImgRe = /["']image["']\s*:\s*["'](https?:[^"']+\.(?:jpg|jpeg|png|webp|avif)[^"']*)["']/gi
+    while ((m = jsonImgRe.exec(html)) && images.length < 8) { const u = m[1].trim(); if (!images.includes(u)) images.push(u) }
+    return c.json({ success: true, price, title, image: images[0] || '', images })
   } catch (e: any) {
-    return c.json({ success: false, error: e.message, price: 0 })
+    return c.json({ success: false, error: e.message, price: 0, images: [] })
   }
 })
 
-// Refresh all auto-price affiliate products
+// Server-side image proxy fetch -> returns base64 data URL (bypasses hotlink/CORS blocks so affiliate images always show)
+admin.post('/proxy-image', async (c) => {
+  const { url } = await c.req.json()
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36', 'Referer': new URL(url).origin } })
+    if (!res.ok) return c.json({ success: false })
+    const ct = res.headers.get('content-type') || 'image/jpeg'
+    const buf = await res.arrayBuffer()
+    if (buf.byteLength > 900000) return c.json({ success: false, error: 'too large', url }) // keep DB rows small; use original url
+    let bin = ''; const bytes = new Uint8Array(buf)
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i])
+    const b64 = btoa(bin)
+    return c.json({ success: true, dataUrl: `data:${ct};base64,${b64}` })
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message })
+  }
+})
+
+// Refresh all auto-price affiliate products (price + images)
 admin.post('/refresh-prices', async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT id, affiliate_url FROM products WHERE auto_price_fetch=1 AND affiliate_url != ""').all()
+  const { results } = await c.env.DB.prepare('SELECT id, affiliate_url, images FROM products WHERE auto_price_fetch=1 AND affiliate_url != ""').all()
   let updated = 0
   for (const p of results as any[]) {
     try {
-      const res = await fetch(p.affiliate_url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+      const res = await fetch(p.affiliate_url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36' }, redirect: 'follow' })
       const html = await res.text()
-      const m = html.match(/<meta[^>]+property=["'](?:product:price:amount|og:price:amount)["'][^>]+content=["']([\d.,]+)["']/i) || html.match(/₹\s*([\d,]+(?:\.\d+)?)/)
-      if (m) { await c.env.DB.prepare('UPDATE products SET price=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(parseFloat(m[1].replace(/,/g, '')), p.id).run(); updated++ }
+      const pm = html.match(/<meta[^>]+(?:property|itemprop|name)=["'](?:product:price:amount|og:price:amount|price)["'][^>]+content=["']([\d.,]+)["']/i) || html.match(/["'](?:price|salePrice|finalPrice)["']\s*:\s*["']?([\d]+(?:[.,]\d+)?)/i) || html.match(/[₹$]\s*([\d,]+(?:\.\d+)?)/)
+      const im = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url|:url)?|twitter:image)["'][^>]+content=["']([^"']+)["']/i)
+      let didUpdate = false
+      if (pm) { await c.env.DB.prepare('UPDATE products SET price=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(parseFloat(pm[1].replace(/,/g, '')), p.id).run(); didUpdate = true }
+      const existing = parseImages(p.images)
+      if (im && existing.length === 0) { await c.env.DB.prepare('UPDATE products SET images=? WHERE id=?').bind(JSON.stringify([resolveUrl(im[1].trim(), p.affiliate_url)]), p.id).run(); didUpdate = true }
+      if (didUpdate) updated++
     } catch { }
   }
   return c.json({ success: true, updated })
