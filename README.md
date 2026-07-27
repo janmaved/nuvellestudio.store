@@ -4,6 +4,13 @@ A full-stack, aesthetic luxury e-commerce website (soft blush/rose/gold theme, r
 
 ## ✨ Features
 
+### 🤖 AI Live Chat Support ("Nuvi")
+- Floating chat widget on every page — real-time, polite, accurate customer support powered by **Groq Cloud** (Llama 3.3 70B)
+- Answers anything: product questions & recommendations (from the live catalog), company info, shipping, returns/refunds, payments
+- **Order tracking**: type your order number (NVxxxxxxxx) and Nuvi looks it up and reports live status
+- Quick-reply chips, typing indicator, persists across pages
+- Set your Groq key as Netlify env var `GROQ_API_KEY` (free at console.groq.com); locally it reads from `.dev.vars`
+
 ### Storefront
 - Aesthetic luxury design — Cormorant serif headings, blush/rose/mauve/gold palette, rounded soft cards, animations
 - Home (hero, category grid, bestsellers, new arrivals, trust badges), Shop with filters/search/sort
@@ -41,7 +48,9 @@ A full-stack, aesthetic luxury e-commerce website (soft blush/rose/gold theme, r
    - Functions dir: `netlify/functions`
 4. Click **Deploy**. Done — data persists in Netlify Blobs automatically.
 
-No build command, no environment variables, no database signup required.
+No build command, no database signup required.
+
+**Optional env var** (Netlify → Site settings → Environment variables): `GROQ_API_KEY` for the AI chat (required for AI chat — get a free key at console.groq.com).
 
 ## 🖥️ Local Development
 ```bash

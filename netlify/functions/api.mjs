@@ -5,6 +5,10 @@ import { getStore } from '@netlify/blobs'
 // One-click deploy on Netlify — no external database needed.
 
 const ADMIN_PIN = '2005'
+// Set GROQ_API_KEY as a Netlify environment variable (Site settings → Environment variables).
+// For local dev it is read from .dev.vars (git-ignored).
+const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
+const GROQ_MODEL = 'llama-3.3-70b-versatile'
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS' } })
 
 function store() { return getStore({ name: 'nuvelle', consistency: 'strong' }) }
@@ -121,6 +125,62 @@ export default async (req) => {
       const total = body.subtotal + shipping
       d.orders.push({ id: d.nextId++, order_number: orderNum, customer_name: body.name, customer_email: body.email, customer_phone: body.phone || '', shipping_address: body.address || '', items: body.items || [], subtotal: body.subtotal, shipping, total, status: 'pending', payment_status: 'pending', created_at: new Date().toISOString() })
       await saveData(d); return json({ success: true, order_number: orderNum, total, shipping })
+    }
+
+    // ---------- AI CHAT SUPPORT (Groq) ----------
+    if (path === '/chat' && method === 'POST') {
+      const s = d.settings
+      const cur = s.currency === 'INR' ? '₹' : (s.currency || '₹')
+      // Build compact product catalog context
+      const catalog = d.products.filter(p => p.active !== 0).slice(0, 40).map(p =>
+        `- ${p.name} (${p.category}${p.brand ? ', ' + p.brand : ''}) — ${cur}${p.price}${p.compare_price > p.price ? ` (was ${cur}${p.compare_price})` : ''}, ${p.stock > 0 ? 'In stock' : 'Out of stock'}, rated ${p.rating}/5`
+      ).join('\n')
+      const cats = d.categories.map(c => c.name).join(', ')
+      // Order lookup if user references an order number
+      let orderInfo = ''
+      const userMsg = (body.messages || []).filter(m => m.role === 'user').map(m => m.content).join(' ')
+      const onm = userMsg.match(/NV\d{6,}/i)
+      if (onm) {
+        const o = d.orders.find(x => x.order_number.toUpperCase() === onm[0].toUpperCase())
+        if (o) orderInfo = `\n\nORDER LOOKUP — ${o.order_number}: status "${o.status}", payment "${o.payment_status}", total ${cur}${o.total}, placed ${new Date(o.created_at).toLocaleDateString()}, items: ${o.items.map(i => i.name + ' x' + i.qty).join(', ')}. Ship to: ${o.customer_name}.`
+        else orderInfo = `\n\nORDER LOOKUP — no order found with number ${onm[0]}. Ask the customer to double-check the order number from their confirmation email.`
+      }
+      const thr = s.free_shipping_threshold || '999', fee = s.shipping_fee || '49'
+      const sys = `You are "Nuvi", the friendly, professional live customer-support assistant for ${s.store_name || 'Nuvéllé'}, a premium online store for beauty, makeup, skincare, jewelry, fragrance and fashion (women & men).
+
+Be warm, polite, concise and genuinely helpful — like a top luxury-brand support agent. Use the store facts below to answer accurately. Never invent products, prices, or policies not listed. If asked something you cannot know (e.g. a specific order you have no data for), politely ask for the order number or suggest emailing ${s.contact_email || 'care@nuvelle.com'}. Keep answers short (2-5 sentences) unless detail is needed. You may recommend relevant products from the catalog.
+
+STORE FACTS:
+- Store: ${s.store_name || 'Nuvéllé'} — ${s.store_tagline || 'Beauty. Fashion. Luxury.'}
+- Categories: ${cats}
+- Shipping: FREE over ${cur}${thr}; otherwise ${cur}${fee} flat. Standard delivery 3-7 business days across India. Tracking sent by email & SMS after dispatch.
+- Returns: 7-day easy returns from delivery. Items must be unused with tags & original packaging. Opened beauty/personal-care items are non-returnable for hygiene. Refunds in 5-7 business days to original payment method. Exchange for size/defect at no cost.
+- Damaged/wrong item: contact within 48 hours with photos for free replacement or refund.
+- Payments: cards, UPI, netbanking, wallets — securely via PayU.
+- Authenticity: 100% genuine products, sourced from authorized brands.
+- Contact: ${s.contact_email || 'care@nuvelle.com'}, ${s.contact_phone || ''}.
+- To track an order: give the customer's order number (format NVxxxxxxxx).${orderInfo}
+
+PRODUCT CATALOG (sample):
+${catalog}`
+      try {
+        const gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+            temperature: 0.4,
+            max_tokens: 500,
+            messages: [{ role: 'system', content: sys }, ...(body.messages || []).slice(-8)]
+          })
+        })
+        if (!gr.ok) { const et = await gr.text(); return json({ reply: `I'm having a little trouble right now. Please email us at ${s.contact_email || 'care@nuvelle.com'} and we'll help you right away!`, error: et }, 200) }
+        const gj = await gr.json()
+        const reply = gj.choices?.[0]?.message?.content || 'Sorry, could you rephrase that?'
+        return json({ reply })
+      } catch (e) {
+        return json({ reply: `I'm having trouble connecting right now. Please email ${s.contact_email || 'care@nuvelle.com'} or try again in a moment.`, error: e.message }, 200)
+      }
     }
 
     // ---------- ADMIN ----------

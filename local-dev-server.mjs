@@ -8,6 +8,14 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUB = path.join(__dirname, 'public')
 
+// Load .dev.vars into process.env for local dev (e.g. GROQ_API_KEY)
+try {
+  const dv = path.join(__dirname, '.dev.vars')
+  if (fs.existsSync(dv)) for (const line of fs.readFileSync(dv, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i); if (m) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
+  }
+} catch { }
+
 // in-memory blob mock persisted to a local json file
 const DBFILE = path.join(__dirname, '.local-data.json')
 const mem = {}

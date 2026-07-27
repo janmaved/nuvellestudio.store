@@ -241,11 +241,13 @@ function pageCheckout() {
   return `${nav()}<div class="max-w-5xl mx-auto px-5 py-10"><h1 class="font-serif text-5xl text-wine mb-8">Checkout</h1>
     <div class="grid md:grid-cols-2 gap-10">
       <div class="card p-6"><h3 class="font-serif text-2xl text-wine mb-5">Shipping Details</h3>
-        <input id="coName" placeholder="Full Name *" class="mb-3">
+        <div class="grid grid-cols-2 gap-3 mb-3"><input id="coName" placeholder="Full Name *"><input id="coPhone" placeholder="Phone *" inputmode="tel"></div>
         <input id="coEmail" type="email" placeholder="Email *" class="mb-3">
-        <input id="coPhone" placeholder="Phone *" class="mb-3">
-        <textarea id="coAddress" placeholder="Full Address *" rows="3" class="mb-3"></textarea>
-        <div class="bg-softpink rounded-2xl p-4 text-sm"><i class="fas fa-lock text-mauve mr-2"></i>Secure payment powered by <b>PayU</b></div>
+        <input id="coAddress" placeholder="House / Flat No., Building, Street *" class="mb-3">
+        <input id="coLandmark" placeholder="Landmark / Area (optional)" class="mb-3">
+        <div class="grid grid-cols-2 gap-3 mb-3"><input id="coCity" placeholder="City *"><input id="coState" placeholder="State *"></div>
+        <div class="grid grid-cols-2 gap-3 mb-3"><input id="coPincode" placeholder="PIN Code *" inputmode="numeric" maxlength="6"><input id="coCountry" value="India" placeholder="Country"></div>
+        <div class="bg-softpink rounded-2xl p-4 text-sm"><i class="fas fa-lock text-mauve mr-2"></i>Secure payment powered by <b>PayU</b> · Cash on Delivery available</div>
       </div>
       <div class="card p-6 h-fit"><h3 class="font-serif text-2xl text-wine mb-4">Order Summary</h3>
         ${items.map(i => `<div class="flex justify-between text-sm mb-2"><span>${i.name} ×${i.qty}</span><span>${money(i.price * i.qty)}</span></div>`).join('')}
@@ -255,10 +257,15 @@ function pageCheckout() {
     </div></div>${footer()}`
 }
 window.placeOrder = async () => {
-  const name = $('#coName').value.trim(), email = $('#coEmail').value.trim(), phone = $('#coPhone').value.trim(), address = $('#coAddress').value.trim()
-  if (!name || !email || !phone || !address) return toast('Please fill all required fields', 'err')
+  const g = id => ($('#' + id) ? $('#' + id).value.trim() : '')
+  const name = g('coName'), email = g('coEmail'), phone = g('coPhone'), line = g('coAddress'), landmark = g('coLandmark'), city = g('coCity'), state = g('coState'), pincode = g('coPincode'), country = g('coCountry') || 'India'
+  if (!name || !email || !phone || !line || !city || !state || !pincode) return toast('Please fill all required fields', 'err')
+  if (!/^\S+@\S+\.\S+$/.test(email)) return toast('Please enter a valid email', 'err')
+  if (!/^\d{10}$/.test(phone.replace(/\D/g, '').slice(-10))) return toast('Please enter a valid 10-digit phone', 'err')
+  if (!/^\d{6}$/.test(pincode)) return toast('Please enter a valid 6-digit PIN code', 'err')
+  const address = `${line}${landmark ? ', ' + landmark : ''}, ${city}, ${state} - ${pincode}, ${country}`
   const items = Cart.get(), sub = Cart.subtotal()
-  const { data } = await axios.post('/api/checkout', { name, email, phone, address, items, subtotal: sub })
+  const { data } = await axios.post('/api/checkout', { name, email, phone, address, city, state, pincode, country, items, subtotal: sub })
   if (data.success) {
     localStorage.removeItem('diva_cart'); updateCartCount()
     document.getElementById('app').innerHTML = `${nav()}<div class="max-w-lg mx-auto px-5 py-24 text-center"><div class="card p-10"><i class="fas fa-circle-check text-6xl text-green-500 mb-5"></i><h1 class="font-serif text-4xl text-wine mb-3">Order Confirmed!</h1><p class="text-charcoal/70 mb-2">Order <b>${data.order_number}</b></p><p class="text-charcoal/70 mb-6">Total paid: <b>${money(data.total)}</b></p><p class="text-sm text-charcoal/50 mb-6">A confirmation email has been sent. Redirecting to PayU for payment...</p><a href="/shop" class="btn btn-primary px-8 py-3">Continue Shopping</a></div></div>${footer()}`
@@ -309,6 +316,58 @@ function pageContact() {
   </div>${footer()}`
 }
 
+// ==================== AI LIVE CHAT SUPPORT (Nuvi) ====================
+let CHAT = { open: false, loading: false, history: [] }
+function mountChat() {
+  if (document.getElementById('nuvi-widget')) return
+  const w = document.createElement('div')
+  w.id = 'nuvi-widget'
+  document.body.appendChild(w)
+  renderChat()
+}
+function renderChat() {
+  const w = document.getElementById('nuvi-widget'); if (!w) return
+  const msgs = CHAT.history.length ? CHAT.history : [{ role: 'assistant', content: `Hi! I'm Nuvi 💕 your ${SETTINGS.store_name || 'Nuvéllé'} assistant. Ask me about products, orders, shipping, returns — anything!` }]
+  w.innerHTML = `
+    <button onclick="toggleChat()" class="fixed bottom-6 right-6 z-[90] w-16 h-16 rounded-full btn-primary shadow-2xl flex items-center justify-center text-2xl text-white ${CHAT.open ? 'hidden' : ''}" style="background:linear-gradient(135deg,var(--rose),var(--mauve))" aria-label="Chat support"><i class="fas fa-comment-dots"></i><span class="absolute -top-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></span></button>
+    <div class="fixed bottom-6 right-6 z-[95] w-[92vw] max-w-sm ${CHAT.open ? '' : 'hidden'}">
+      <div class="card !rounded-3xl overflow-hidden flex flex-col" style="height:min(70vh,560px)">
+        <div class="p-4 text-white flex items-center justify-between" style="background:linear-gradient(135deg,var(--mauve),var(--wine))">
+          <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="fas fa-headset"></i></div><div><p class="font-serif text-lg leading-tight">Nuvi Support</p><p class="text-[11px] opacity-80"><span class="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>Online · replies instantly</p></div></div>
+          <button onclick="toggleChat()" class="text-xl hover:opacity-70"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div id="nuvi-msgs" class="flex-1 overflow-y-auto p-4 space-y-3 bg-cream">
+          ${msgs.map(m => chatBubble(m)).join('')}
+          ${CHAT.loading ? `<div class="flex gap-1 pl-2"><span class="w-2 h-2 bg-mauve rounded-full animate-bounce"></span><span class="w-2 h-2 bg-mauve rounded-full animate-bounce" style="animation-delay:.15s"></span><span class="w-2 h-2 bg-mauve rounded-full animate-bounce" style="animation-delay:.3s"></span></div>` : ''}
+        </div>
+        <div class="p-2 border-t border-rose/20 bg-white">
+          ${CHAT.history.length === 0 ? `<div class="flex flex-wrap gap-1.5 px-1 pb-2">${['Track my order', 'Return policy', 'Shipping info', 'Best sellers'].map(q => `<button onclick="quickAsk('${q}')" class="chip text-xs px-3 py-1">${q}</button>`).join('')}</div>` : ''}
+          <div class="flex gap-2"><input id="nuvi-input" placeholder="Type your message..." class="!py-2.5 text-sm" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="btn btn-primary px-4"><i class="fas fa-paper-plane"></i></button></div>
+        </div>
+      </div>
+    </div>`
+  const box = document.getElementById('nuvi-msgs'); if (box) box.scrollTop = box.scrollHeight
+}
+function chatBubble(m) {
+  if (m.role === 'user') return `<div class="flex justify-end"><div class="bg-mauve text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm max-w-[80%]">${escapeHtml(m.content)}</div></div>`
+  return `<div class="flex gap-2"><div class="w-7 h-7 rounded-full bg-rose/40 flex items-center justify-center text-mauve text-xs shrink-0 mt-1"><i class="fas fa-sparkles"></i></div><div class="bg-white rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm max-w-[80%] shadow-sm text-charcoal/90">${formatReply(m.content)}</div></div>`
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) }
+function formatReply(s) { return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>') }
+window.toggleChat = () => { CHAT.open = !CHAT.open; renderChat(); if (CHAT.open) setTimeout(() => document.getElementById('nuvi-input')?.focus(), 100) }
+window.quickAsk = (q) => { document.getElementById('nuvi-input').value = q; sendChat() }
+window.sendChat = async () => {
+  const inp = document.getElementById('nuvi-input'); const text = inp.value.trim(); if (!text || CHAT.loading) return
+  CHAT.history.push({ role: 'user', content: text }); inp.value = ''; CHAT.loading = true; renderChat()
+  try {
+    const { data } = await axios.post('/api/chat', { messages: CHAT.history.slice(-8) })
+    CHAT.history.push({ role: 'assistant', content: data.reply || 'Sorry, please try again.' })
+  } catch {
+    CHAT.history.push({ role: 'assistant', content: `I'm having trouble connecting. Please email ${SETTINGS.contact_email || 'care@nuvelle.com'}.` })
+  }
+  CHAT.loading = false; renderChat()
+}
+
 // ---------- Router ----------
 function currentPage() {
   const p = location.pathname.replace(/\/$/, '')
@@ -352,5 +411,6 @@ async function boot() {
   try { const [{ data: s }, { data: cats }] = await Promise.all([axios.get('/api/settings'), axios.get('/api/categories')]); SETTINGS = s; CATS = cats } catch { }
   applyTheme()
   render()
+  mountChat()
 }
 boot()
