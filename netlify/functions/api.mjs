@@ -9,14 +9,32 @@ const ADMIN_PIN = '2005'
 // For local dev it is read from .dev.vars (git-ignored).
 const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
 const GROQ_MODEL = 'llama-3.3-70b-versatile'
-const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS' } })
+const SCHEMA_VERSION = 5 // bump when seed structure changes so deployed Blobs data migrates
+const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS' } })
 
 function store() { return getStore({ name: 'nuvelle', consistency: 'strong' }) }
 
 async function getData() {
   const s = store()
   let d = await s.get('data', { type: 'json' })
-  if (!d) { d = seedData(); await s.setJSON('data', d) }
+  if (!d) { d = seedData(); d._v = SCHEMA_VERSION; await s.setJSON('data', d) }
+  else if (d._v !== SCHEMA_VERSION) { d = migrate(d); d._v = SCHEMA_VERSION; await s.setJSON('data', d) }
+  return d
+}
+// Merge newly-added features into already-seeded deployments (so updates appear on Netlify)
+function migrate(d) {
+  const seed = seedData()
+  d.settings = { ...seed.settings, ...(d.settings || {}) }
+  if (!Array.isArray(d.reels) || !d.reels.length) d.reels = seed.reels
+  if (!Array.isArray(d.blocks) || !d.blocks.length) d.blocks = seed.blocks
+  else if (!d.blocks.some(b => b.type === 'reels')) d.blocks.unshift({ id: 100, type: 'reels', enabled: 1, sort: 0, data: { title: 'Shop Our Reels' } })
+  if (!Array.isArray(d.products)) d.products = seed.products
+  d.products = d.products.map(p => ({ faqs: [], variants: [], highlights: '', ...p }))
+  if (!Array.isArray(d.categories) || !d.categories.length) d.categories = seed.categories
+  if (!Array.isArray(d.orders)) d.orders = []
+  if (!Array.isArray(d.reviews)) d.reviews = seed.reviews
+  if (!Array.isArray(d.events)) d.events = []
+  if (typeof d.nextId !== 'number' || d.nextId < 200) d.nextId = 400
   return d
 }
 async function saveData(d) { await store().setJSON('data', d) }

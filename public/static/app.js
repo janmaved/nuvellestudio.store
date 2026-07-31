@@ -45,6 +45,7 @@ function nav() {
       <div class="flex items-center gap-5 text-lg text-wine">
         <button onclick="openSearch()" class="hover:text-mauve"><i class="fas fa-search"></i></button>
         <a href="/cart" class="relative hover:text-mauve"><i class="fas fa-bag-shopping"></i><span class="cart-count hidden absolute -top-2 -right-2 bg-mauve text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">0</span></a>
+        <a href="/admin" title="Admin Login" class="hover:text-mauve"><i class="fas fa-user-shield"></i></a>
       </div>
     </nav>
     <div id="searchBar" class="hidden border-t border-rose/30 px-5 py-3 bg-white/70"><div class="max-w-2xl mx-auto flex gap-2"><input id="searchInput" placeholder="Search luxury products..." onkeydown="if(event.key==='Enter')doSearch()"><button onclick="doSearch()" class="btn btn-primary px-6"><i class="fas fa-search"></i></button></div></div>
@@ -55,7 +56,7 @@ function nav() {
       <div class="flex justify-between items-center mb-8"><span class="font-serif text-2xl text-wine font-bold">${SETTINGS.store_name || 'Nuvéllé'}</span><button onclick="closeMenu()"><i class="fas fa-times text-xl"></i></button></div>
       <a href="/" class="block py-3 border-b border-rose/20">Home</a><a href="/shop" class="block py-3 border-b border-rose/20">Shop</a>
       ${CATS.map(c => `<a href="/shop?category=${c.slug}" class="block py-3 border-b border-rose/20"><i class="fas ${c.icon} text-mauve mr-2"></i>${c.name}</a>`).join('')}
-      <a href="/about" class="block py-3 border-b border-rose/20">About</a><a href="/faq" class="block py-3 border-b border-rose/20">FAQ</a><a href="/shipping" class="block py-3">Shipping & Returns</a>
+      <a href="/about" class="block py-3 border-b border-rose/20">About</a><a href="/faq" class="block py-3 border-b border-rose/20">FAQ</a><a href="/shipping" class="block py-3 border-b border-rose/20">Shipping & Returns</a><a href="/admin" class="block py-3 text-mauve"><i class="fas fa-user-shield mr-2"></i>Admin Login</a>
     </div>
   </aside>`
 }
@@ -73,7 +74,7 @@ function footer() {
       <div><h4 class="font-medium mb-4 text-white">Help</h4><ul class="space-y-2 text-sm text-blush/80"><li><a href="/faq" class="hover:text-white">FAQ</a></li><li><a href="/shipping" class="hover:text-white">Shipping & Returns</a></li><li><a href="/contact" class="hover:text-white">Contact Us</a></li><li><a href="/about" class="hover:text-white">About Us</a></li></ul></div>
       <div><h4 class="font-medium mb-4 text-white">Newsletter</h4><p class="text-sm text-blush/80 mb-3">Get 10% off your first order.</p><div class="flex gap-2"><input placeholder="Email" class="!bg-white/10 !border-white/20 !text-white placeholder:!text-blush/60"><button onclick="toast('Subscribed! Welcome to Nuvéllé ✨')" class="btn bg-gold text-white px-4 whitespace-nowrap">Join</button></div></div>
     </div>
-    <div class="border-t border-white/10 py-5 text-center text-xs text-blush/70">${SETTINGS.footer_text ? SETTINGS.footer_text + ' · ' : ''}© ${new Date().getFullYear()} ${SETTINGS.store_name || 'Nuvéllé'}. All rights reserved. · Secure payments via PayU</div>
+    <div class="border-t border-white/10 py-5 text-center text-xs text-blush/70">${SETTINGS.footer_text ? SETTINGS.footer_text + ' · ' : ''}© ${new Date().getFullYear()} ${SETTINGS.store_name || 'Nuvéllé'}. All rights reserved. · Secure payments via PayU · <a href="/admin" class="hover:text-white underline"><i class="fas fa-lock mr-1"></i>Admin Login</a></div>
   </footer>`
 }
 
