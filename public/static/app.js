@@ -158,6 +158,30 @@ async function renderBlock(b) {
     <h2 class="font-serif text-4xl text-wine mb-3">${d.title || 'Join the Circle'}</h2>
     <p class="text-charcoal/70 mb-6 max-w-lg mx-auto">${d.subtitle || 'Be first to know about new drops & exclusive offers.'}</p>
     <div class="flex gap-2 max-w-md mx-auto"><input id="nlEmail" placeholder="Enter your email" class="flex-1"><button onclick="subscribeNl()" class="btn btn-primary px-6">Subscribe</button></div></div></section>`
+  if (b.type === 'reels') {
+    let reels = []; try { const { data } = await axios.get('/api/reels'); reels = data } catch { }
+    if (!reels.length) return ''
+    const handle = SETTINGS.instagram_handle || ''
+    return `<section class="max-w-7xl mx-auto px-5 pt-8 pb-4">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="font-serif text-3xl md:text-4xl text-wine flex items-center gap-2"><i class="fab fa-instagram text-mauve"></i>${d.title || SETTINGS.reels_title || 'Shop Our Reels'}</h2>
+        ${handle ? `<a href="https://instagram.com/${handle.replace('@', '')}" target="_blank" class="text-sm text-mauve hover:text-wine">@${handle.replace('@', '')} <i class="fas fa-arrow-right ml-1"></i></a>` : ''}
+      </div>
+      <div class="flex gap-5 overflow-x-auto pb-4 snap-x">
+        ${reels.map(r => `<div class="snap-start shrink-0 w-[240px]">
+          <div class="relative rounded-2xl overflow-hidden shadow-lg aspect-[9/16] bg-black group">
+            ${r.media_type === 'video' ? `<video src="${r.media_url}" class="w-full h-full object-cover" muted loop playsinline autoplay onmouseover="this.play()" onerror="this.style.display='none'"></video>` : `<img src="${r.media_url}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/240x420/F7E7E4/8C5A5A?text=Reel'">`}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute top-3 left-3 text-white text-xs bg-black/30 backdrop-blur px-2 py-1 rounded-full"><i class="fab fa-instagram mr-1"></i>Reel</div>
+            ${r.caption ? `<p class="absolute bottom-3 left-3 right-3 text-white text-xs leading-snug line-clamp-2">${escapeHtml(r.caption)}</p>` : ''}
+          </div>
+          ${(r.products || []).length ? `<div class="mt-2 space-y-2">${r.products.map(p => `<a href="${p.url}" ${p.is_affiliate ? 'target="_blank" onclick="track(\'affiliate_click\',' + p.id + ')"' : ''} class="flex items-center gap-2 card p-2 hover:shadow-md transition group">
+            <img src="${p.image}" class="w-11 h-11 rounded-lg object-cover shrink-0" onerror="this.onerror=null;this.src='https://via.placeholder.com/80/F7E7E4/8C5A5A?text=N'">
+            <div class="min-w-0 flex-1"><p class="text-xs font-medium truncate group-hover:text-mauve">${escapeHtml(p.name)}</p><p class="text-sm text-wine font-serif">${money(p.price)}${p.compare_price > p.price ? ` <span class="text-[10px] text-charcoal/40 line-through">${money(p.compare_price)}</span>` : ''}</p></div>
+            <i class="fas fa-arrow-right text-mauve text-xs shrink-0"></i></a>`).join('')}</div>` : ''}
+        </div>`).join('')}
+      </div></section>`
+  }
   if (b.type === 'custom') return `<section class="block-custom">${d.html || ''}</section>`
   return ''
 }

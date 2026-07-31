@@ -34,7 +34,8 @@ function seedData() {
       theme_primary: '#E8B4B8', theme_secondary: '#C98986', theme_dark: '#8C5A5A', theme_accent: '#C9A96A',
       about_text: "Born from a passion for timeless elegance, Nuvéllé curates the world's finest beauty, jewelry & fashion. We believe every woman and man deserves to feel like an icon.",
       contact_email: 'care@nuvelle.com', contact_phone: '+91 98765 43210',
-      social_instagram: '#', social_facebook: '#', social_pinterest: '#', footer_text: ''
+      social_instagram: '#', social_facebook: '#', social_pinterest: '#', footer_text: '',
+      instagram_handle: '', instagram_connected: '', reels_title: 'Shop Our Reels'
     },
     categories: [
       { id: 1, name: 'Makeup', slug: 'makeup', icon: 'fa-wand-magic-sparkles', sort_order: 1 },
@@ -66,7 +67,13 @@ function seedData() {
       { id: 4, product_id: 3, customer_name: 'Sneha P.', rating: 4, comment: 'Beautiful necklace, looks very premium. Fast delivery.', media: [], created_at: now() },
       { id: 5, product_id: 6, customer_name: 'Arjun T.', rating: 5, comment: 'Amazing fragrance, gets so many compliments!', media: [], created_at: now() }
     ],
+    reels: [
+      { id: 301, media_type: 'image', media_url: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600', caption: 'Get the perfect ruby pout 💄✨', product_ids: [1], sort: 1, created_at: now() },
+      { id: 302, media_type: 'image', media_url: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600', caption: 'My glow-up secret ✨ 24K gold serum', product_ids: [2], sort: 2, created_at: now() },
+      { id: 303, media_type: 'image', media_url: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600', caption: 'Signature scent of the season 🖤', product_ids: [6, 3], sort: 3, created_at: now() }
+    ],
     blocks: [
+      { id: 100, type: 'reels', enabled: 1, sort: 0, data: { title: 'Shop Our Reels' } },
       { id: 101, type: 'hero', enabled: 1, sort: 1, data: {} },
       { id: 102, type: 'category-grid', enabled: 1, sort: 2, data: { title: 'Shop by Category' } },
       { id: 103, type: 'products', enabled: 1, sort: 3, data: { title: 'Bestsellers', filter: 'featured', limit: 8 } },
@@ -117,6 +124,11 @@ export default async (req) => {
     if (path === '/categories' && method === 'GET') return json([...d.categories].sort((a, b) => a.sort_order - b.sort_order))
     if (path === '/settings' && method === 'GET') { const o = { ...d.settings }; delete o.payu_key; return json(o) }
     if (path === '/blocks' && method === 'GET') return json([...(d.blocks || [])].filter(b => b.enabled !== 0).sort((a, b) => a.sort - b.sort))
+    if (path === '/reels' && method === 'GET') {
+      const reels = [...(d.reels || [])].sort((a, b) => (a.sort || 0) - (b.sort || 0))
+      const withProds = reels.map(r => ({ ...r, products: (r.product_ids || []).map(pid => { const pr = d.products.find(x => x.id == pid); if (!pr) return null; return { id: pr.id, name: pr.name, price: pr.price, compare_price: pr.compare_price, image: (pr.images || [])[0] || '', is_affiliate: pr.is_affiliate, affiliate_url: pr.affiliate_url, url: (pr.is_affiliate && pr.affiliate_url) ? pr.affiliate_url : ('/product/' + pr.id) } }).filter(Boolean) }))
+      return json(withProds)
+    }
     if (path === '/reviews' && method === 'POST') {
       const media = Array.isArray(body.media) ? body.media.slice(0, 5) : []
       const r = { id: d.nextId++, product_id: body.product_id, customer_name: body.customer_name, rating: Math.max(1, Math.min(5, +body.rating || 5)), comment: body.comment || '', media, created_at: new Date().toISOString() }
@@ -264,6 +276,23 @@ ${catalog}`
       if (ap === '/categories' && method === 'POST') { d.categories.push({ id: d.nextId++, name: body.name, slug: body.slug, icon: body.icon || 'fa-tag', sort_order: body.sort_order || 99 }); await saveData(d); return json({ success: true }) }
       const cm = ap.match(/^\/categories\/(\d+)$/)
       if (cm && method === 'DELETE') { d.categories = d.categories.filter(x => x.id != cm[1]); await saveData(d); return json({ success: true }) }
+
+      // ---- Reels (Instagram-style) ----
+      if (ap === '/reels' && method === 'GET') return json([...(d.reels || [])].sort((a, b) => (a.sort || 0) - (b.sort || 0)))
+      if (ap === '/reels' && method === 'POST') {
+        if (!d.reels) d.reels = []
+        const maxSort = d.reels.reduce((m, r) => Math.max(m, r.sort || 0), 0)
+        const nr = { id: d.nextId++, media_type: body.media_type === 'video' ? 'video' : 'image', media_url: body.media_url || '', caption: body.caption || '', product_ids: Array.isArray(body.product_ids) ? body.product_ids.map(Number) : [], sort: maxSort + 1, created_at: new Date().toISOString() }
+        d.reels.push(nr); await saveData(d); return json({ success: true, id: nr.id })
+      }
+      if (ap === '/reels/reorder' && method === 'POST') {
+        const order = Array.isArray(body.order) ? body.order : []
+        order.forEach((id, i) => { const r = (d.reels || []).find(x => x.id == id); if (r) r.sort = i + 1 })
+        await saveData(d); return json({ success: true })
+      }
+      const rm = ap.match(/^\/reels\/(\d+)$/)
+      if (rm && method === 'PUT') { const r = (d.reels || []).find(x => x.id == rm[1]); if (r) { if (body.media_type != null) r.media_type = body.media_type === 'video' ? 'video' : 'image'; if (body.media_url != null) r.media_url = body.media_url; if (body.caption != null) r.caption = body.caption; if (body.product_ids != null) r.product_ids = (body.product_ids || []).map(Number); await saveData(d) } return json({ success: true }) }
+      if (rm && method === 'DELETE') { d.reels = (d.reels || []).filter(x => x.id != rm[1]); await saveData(d); return json({ success: true }) }
 
       // ---- Blocks (homepage sections) ----
       if (ap === '/blocks' && method === 'GET') return json([...(d.blocks || [])].sort((a, b) => a.sort - b.sort))

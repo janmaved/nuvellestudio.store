@@ -33,7 +33,7 @@ window.doLogin = async () => {
 window.logout = () => { sessionStorage.removeItem('diva_pin'); PIN = ''; renderAdmin() }
 
 function shell(content) {
-  const tabs = [['dashboard', 'fa-chart-line', 'Dashboard'], ['products', 'fa-box', 'Products'], ['sections', 'fa-layer-group', 'Store Builder'], ['orders', 'fa-receipt', 'Orders'], ['categories', 'fa-tags', 'Categories'], ['settings', 'fa-gear', 'Settings']]
+  const tabs = [['dashboard', 'fa-chart-line', 'Dashboard'], ['products', 'fa-box', 'Products'], ['reels', 'fa-clapperboard', 'Reels'], ['sections', 'fa-layer-group', 'Store Builder'], ['orders', 'fa-receipt', 'Orders'], ['categories', 'fa-tags', 'Categories'], ['settings', 'fa-gear', 'Settings']]
   return `<div class="flex min-h-screen">
     <aside class="w-60 bg-wine text-blush p-5 hidden md:block">
       <div class="font-serif text-3xl text-white mb-8 tracking-widest">Nuvéllé</div>
@@ -300,7 +300,73 @@ window.saveSettings = async () => {
 // ---------- Store Builder (Homepage Sections) ----------
 const BLOCK_META = {
   hero: ['fa-star', 'Hero Banner'], 'category-grid': ['fa-th', 'Category Grid'], products: ['fa-box', 'Product Row'],
-  banner: ['fa-image', 'Promo Banner'], features: ['fa-icons', 'Feature Highlights'], newsletter: ['fa-envelope', 'Newsletter'], custom: ['fa-wand-magic-sparkles', 'AI / Custom Block']
+  banner: ['fa-image', 'Promo Banner'], features: ['fa-icons', 'Feature Highlights'], newsletter: ['fa-envelope', 'Newsletter'], custom: ['fa-wand-magic-sparkles', 'AI / Custom Block'], reels: ['fa-clapperboard', 'Instagram Reels']
+}
+
+// ---------- Reels (Instagram) ----------
+async function viewReels() {
+  const [{ data: s }, { data: reels }, { data: products }] = await Promise.all([api.get('/settings'), api.get('/reels'), api.get('/products')])
+  window._reelProducts = products
+  const connected = s.instagram_connected === '1'
+  return `<h1 class="font-serif text-4xl text-wine mb-1">Instagram Reels</h1>
+  <p class="text-charcoal/60 text-sm mb-6">Connect your Instagram and showcase reels at the top of your homepage — each with shoppable products that redirect to their (affiliate) links.</p>
+  <div class="card p-6 mb-6 ${connected ? 'bg-softpink' : ''}">
+    <h3 class="font-serif text-xl text-wine mb-3"><i class="fab fa-instagram text-mauve mr-2"></i>Instagram Account</h3>
+    <div class="grid md:grid-cols-2 gap-4 items-end">
+      <div><label class="text-xs text-charcoal/60">Your Instagram Username</label><div class="flex items-center gap-1"><span class="text-charcoal/50">@</span><input id="ig_handle" value="${(s.instagram_handle || '').replace('@', '').replace(/"/g, '&quot;')}" placeholder="nuvelle.store"></div></div>
+      <div class="flex gap-2">${connected ? `<span class="btn bg-green-500 text-white px-4 py-2.5 flex-1 text-center"><i class="fas fa-check mr-1"></i>Connected</span><button onclick="disconnectIg()" class="btn btn-outline px-4 py-2.5">Disconnect</button>` : `<button onclick="connectIg()" class="btn btn-primary px-4 py-2.5 flex-1"><i class="fab fa-instagram mr-1"></i>Connect Instagram</button>`}</div>
+    </div>
+    <p class="text-xs text-charcoal/40 mt-2">Add your reels below (upload video/image + link products). They appear at the very top of your homepage.</p>
+  </div>
+  <div class="flex justify-between items-center mb-4"><h3 class="font-serif text-xl text-wine">Your Reels (${reels.length})</h3><button onclick="editReel()" class="btn btn-primary px-4 py-2.5 text-sm"><i class="fas fa-plus mr-1"></i>Add Reel</button></div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    ${reels.length ? reels.map(r => `<div class="card overflow-hidden">
+      <div class="aspect-[9/16] bg-black relative">${r.media_type === 'video' ? `<video src="${r.media_url}" class="w-full h-full object-cover" muted></video>` : `<img src="${r.media_url}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/200x360/F7E7E4/8C5A5A?text=Reel'">`}<div class="absolute top-2 left-2 text-white text-[10px] bg-black/40 px-2 py-0.5 rounded-full"><i class="fab fa-instagram"></i> ${(r.product_ids || []).length} product${(r.product_ids || []).length === 1 ? '' : 's'}</div></div>
+      <div class="p-3"><p class="text-xs text-charcoal/60 line-clamp-2 mb-2 h-8">${r.caption || ''}</p><div class="flex gap-2"><button onclick="editReel(${r.id})" class="btn btn-outline flex-1 py-1.5 text-xs"><i class="fas fa-pen"></i></button><button onclick="delReel(${r.id})" class="btn btn-outline py-1.5 px-3 text-xs text-red-500"><i class="fas fa-trash"></i></button></div></div>
+    </div>`).join('') : '<div class="col-span-full card p-10 text-center text-charcoal/40"><i class="fas fa-clapperboard text-4xl mb-3"></i><p>No reels yet. Click "Add Reel" to create your first shoppable reel!</p></div>'}
+  </div>`
+}
+window.connectIg = async () => { const h = $('#ig_handle').value.trim().replace('@', ''); if (!h) return toast('Enter your Instagram username', 'err'); await api.post('/settings', { instagram_handle: h, instagram_connected: '1' }); toast('Instagram connected ✓'); renderAdmin() }
+window.disconnectIg = async () => { await api.post('/settings', { instagram_connected: '' }); toast('Disconnected'); renderAdmin() }
+window.delReel = async (id) => { if (!confirm('Delete this reel?')) return; await api.delete('/reels/' + id); toast('Reel deleted'); renderAdmin() }
+window.editReel = async (id) => {
+  let r = { media_type: 'image', media_url: '', caption: '', product_ids: [] }
+  if (id) { const { data } = await api.get('/reels'); r = data.find(x => x.id === id) || r }
+  const products = window._reelProducts || (await api.get('/products')).data
+  const modal = document.createElement('div')
+  modal.id = 'reelmodal'; modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 overflow-y-auto'
+  modal.innerHTML = `<div class="card w-full max-w-lg my-8 p-6"><div class="flex justify-between items-center mb-4"><h2 class="font-serif text-2xl text-wine">${id ? 'Edit' : 'Add'} Reel</h2><button onclick="document.getElementById('reelmodal').remove()"><i class="fas fa-times text-xl"></i></button></div>
+    <label class="text-xs text-charcoal/60">Reel Media (video or image)</label>
+    <div id="reelPreview" class="mb-2 mt-1">${r.media_url ? (r.media_type === 'video' ? `<video src="${r.media_url}" class="w-32 aspect-[9/16] object-cover rounded-xl" muted controls></video>` : `<img src="${r.media_url}" class="w-32 aspect-[9/16] object-cover rounded-xl">`) : ''}</div>
+    <label class="btn btn-outline px-4 py-2 text-sm cursor-pointer inline-block mb-2"><i class="fas fa-upload mr-1"></i>Upload from Computer<input type="file" accept="image/*,video/*" class="hidden" onchange="uploadReel(event)"></label>
+    <input id="rl_url" value="${(r.media_url || '').replace(/"/g, '&quot;')}" placeholder="or paste video/image URL" class="mb-1 text-sm" oninput="reelPreviewUrl()">
+    <input type="hidden" id="rl_type" value="${r.media_type}">
+    <div class="mb-3 mt-3"><label class="text-xs text-charcoal/60">Caption</label><textarea id="rl_caption" rows="2" placeholder="Reel caption...">${r.caption || ''}</textarea></div>
+    <div class="mb-3"><label class="text-xs text-charcoal/60">Linked Products (shown under the reel — click redirects to their affiliate/product link)</label>
+      <div class="max-h-48 overflow-y-auto border border-rose/20 rounded-xl p-2 mt-1 space-y-1">${products.map(p => `<label class="flex items-center gap-2 text-sm p-1.5 rounded-lg hover:bg-softpink cursor-pointer"><input type="checkbox" class="rl-prod !w-auto" value="${p.id}" ${(r.product_ids || []).includes(p.id) ? 'checked' : ''}><img src="${JSON.parse(p.images || '[]')[0] || ''}" class="w-8 h-8 rounded object-cover" onerror="this.style.visibility='hidden'"><span class="flex-1 truncate">${p.name}</span><span class="text-wine text-xs">${money(p.price)}</span>${p.is_affiliate ? '<i class="fas fa-link text-mauve text-xs" title="affiliate"></i>' : ''}</label>`).join('')}</div>
+    </div>
+    <button onclick="saveReel(${id || 'null'})" class="btn btn-primary w-full py-3"><i class="fas fa-save mr-2"></i>Save Reel</button></div>`
+  document.body.appendChild(modal)
+}
+window.reelPreviewUrl = () => { const u = $('#rl_url').value.trim(); const isV = /\.(mp4|webm|mov)(\?|$)/i.test(u) || u.startsWith('data:video'); $('#rl_type').value = isV ? 'video' : 'image'; $('#reelPreview').innerHTML = u ? (isV ? `<video src="${u}" class="w-32 aspect-[9/16] object-cover rounded-xl" muted controls></video>` : `<img src="${u}" class="w-32 aspect-[9/16] object-cover rounded-xl">`) : '' }
+window.uploadReel = async (ev) => {
+  const file = ev.target.files[0]; if (!file) return
+  const isVideo = file.type.startsWith('video')
+  if (isVideo && file.size > 6000000) return toast('Video too large (max 6MB)', 'err')
+  toast('Uploading...')
+  try {
+    const url = isVideo ? await fileToRaw(file) : await fileToDataUrl(file)
+    $('#rl_url').value = url; $('#rl_type').value = isVideo ? 'video' : 'image'
+    $('#reelPreview').innerHTML = isVideo ? `<video src="${url}" class="w-32 aspect-[9/16] object-cover rounded-xl" muted controls></video>` : `<img src="${url}" class="w-32 aspect-[9/16] object-cover rounded-xl">`
+    toast('Media added ✓')
+  } catch { toast('Upload failed', 'err') }
+}
+function fileToRaw(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file) }) }
+window.saveReel = async (id) => {
+  const media_url = $('#rl_url').value.trim(); if (!media_url) return toast('Add a reel image or video', 'err')
+  const payload = { media_url, media_type: $('#rl_type').value, caption: $('#rl_caption').value, product_ids: Array.from(document.querySelectorAll('.rl-prod:checked')).map(c => +c.value) }
+  if (id) await api.put('/reels/' + id, payload); else await api.post('/reels', payload)
+  toast('Reel saved ✓'); $('#reelmodal').remove(); renderAdmin()
 }
 let _previewDevice = 'desktop'
 async function viewSections() {
@@ -389,6 +455,7 @@ window.editBlock = async (id) => {
   else if (b.type === 'category-grid') fields = inp('title', 'Section Title', d.title)
   else if (b.type === 'newsletter') fields = inp('title', 'Title', d.title) + tar('subtitle', 'Subtitle', d.subtitle)
   else if (b.type === 'features') fields = '<p class="text-sm text-charcoal/60">Feature highlights use your shipping & store settings automatically.</p>'
+  else if (b.type === 'reels') fields = inp('title', 'Section Title', d.title) + '<p class="text-sm text-charcoal/60 mt-2">Manage your reels & linked products in the <b>Reels</b> tab.</p>'
   else if (b.type === 'custom') fields = tar('html', 'Block HTML (AI-generated — editable)', d.html) + `<div class="rounded-xl border border-rose/20 p-3 mt-2"><p class="text-xs text-charcoal/50 mb-2">Live Preview:</p><div class="scale-90 origin-top-left">${d.html || ''}</div></div>`
   box.innerHTML = `<div class="flex justify-between items-center mb-4"><h3 class="font-serif text-xl text-wine"><i class="fas ${(BLOCK_META[b.type] || ['fa-cube'])[0]} text-mauve mr-2"></i>${(BLOCK_META[b.type] || ['', b.type])[1]}</h3></div>${fields}<button onclick="saveBlock(${b.id})" class="btn btn-primary w-full py-2.5 mt-2"><i class="fas fa-save mr-2"></i>Save Section</button>`
 }
@@ -482,6 +549,7 @@ async function renderAdmin() {
   try {
     if (TAB === 'dashboard') content = await viewDashboard()
     else if (TAB === 'products') content = await viewProducts()
+    else if (TAB === 'reels') content = await viewReels()
     else if (TAB === 'sections') { await loadBlocks(); content = await viewSections() }
     else if (TAB === 'orders') content = await viewOrders()
     else if (TAB === 'categories') content = await viewCategories()
